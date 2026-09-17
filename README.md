@@ -38,6 +38,7 @@ A web monitoring dashboard for [Glances](https://nicolargo.github.io/glances/) w
 ## Quick Install
 
 ```bash
+cd /var/www
 git clone https://github.com/renanvignato-tech/dashboard-glances.git
 cd dashboard-glances
 chmod +x install.sh

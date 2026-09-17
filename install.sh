@@ -6,6 +6,8 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m'
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 echo -e "${GREEN}=== Glances Dashboard - Installation ===${NC}"
 echo ""
 
@@ -25,7 +27,6 @@ if ! command -v glances &> /dev/null; then
         echo -e "${YELLOW}Creating venv for Glances...${NC}"
         python3 -m venv /opt/glances-venv
         /opt/glances-venv/bin/pip install glances
-        # Criar wrapper
         sudo tee /usr/local/bin/glances-wrapper > /dev/null <<'WRAPPER'
 #!/bin/bash
 /opt/glances-venv/bin/glances "$@"
@@ -37,21 +38,39 @@ fi
 
 echo ""
 echo -e "${GREEN}[1/6]${NC} Creating virtual environment..."
-VENV_DIR="/var/www/dashboard-glances/venv"
+VENV_DIR="$SCRIPT_DIR/venv"
 python3 -m venv "$VENV_DIR"
 source "$VENV_DIR/bin/activate"
 
 echo -e "${GREEN}[2/6]${NC} Installing Python dependencies..."
-pip install -r requirements.txt --quiet
+pip install -r "$SCRIPT_DIR/requirements.txt" --quiet
 
 echo -e "${GREEN}[3/6]${NC} Initializing database..."
 python3 -c "from app.database import init_db; init_db()"
 
 echo -e "${GREEN}[4/6]${NC} Configuring systemd services..."
-# Atualizar path do ExecStart no service do dashboard
-sed -i "s|ExecStart=.*|ExecStart=$VENV_DIR/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8099 --reload|" glances-dashboard.service
-sudo cp glances-web.service /etc/systemd/system/
-sudo cp glances-dashboard.service /etc/systemd/system/
+
+# Atualizar WorkingDirectory e ExecStart no service
+cat > /tmp/glances-dashboard.service <<EOF
+[Unit]
+Description=Glances Dashboard
+After=network.target glances-web.service
+Requires=glances-web.service
+
+[Service]
+Type=simple
+WorkingDirectory=$SCRIPT_DIR
+ExecStart=$VENV_DIR/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8099 --reload
+Restart=always
+RestartSec=5
+Environment=GLANCES_DASH_SECRET=glances-dashboard-secret-change-me
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo cp /tmp/glances-dashboard.service /etc/systemd/system/
+sudo cp "$SCRIPT_DIR/glances-web.service" /etc/systemd/system/
 sudo systemctl daemon-reload
 
 echo -e "${GREEN}[5/6]${NC} Enabling and starting services..."
@@ -60,7 +79,7 @@ sudo systemctl restart glances-web.service
 sudo systemctl restart glances-dashboard.service
 
 echo -e "${GREEN}[6/6]${NC} Checking status..."
-sleep 2
+sleep 3
 
 GLANCES_STATUS=$(systemctl is-active glances-web.service 2>/dev/null || echo "inactive")
 DASHBOARD_STATUS=$(systemctl is-active glances-dashboard.service 2>/dev/null || echo "inactive")
@@ -82,7 +101,8 @@ fi
 IP=$(hostname -I 2>/dev/null | awk '{print $1}')
 [ -z "$IP" ] && IP="localhost"
 
-echo -e "${GREEN}[6/6]${NC} Installation complete!"
+echo ""
+echo -e "${GREEN}Installation complete!${NC}"
 echo ""
 echo -e "  Access:  ${YELLOW}http://$IP:8099${NC}"
 echo -e "  Login:   ${YELLOW}admin / admin${NC}"
