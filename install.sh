@@ -7,6 +7,7 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+GLANCES_VENV="/opt/glances-venv"
 
 echo -e "${GREEN}=== Glances Dashboard - Installation ===${NC}"
 echo ""
@@ -20,40 +21,43 @@ fi
 PY_VERSION=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
 echo -e "Python: ${YELLOW}$PY_VERSION${NC}"
 
-# Verificar/instalar glances com web support
-GLANCES_BIN=""
-echo -e "${YELLOW}Checking Glances...${NC}"
-
-# Sempre instalar/reinstalar glances[web] para garantir FastAPI
-pip3 install --break-system-packages --force-reinstall "glances[web]" 2>/dev/null || {
-    echo -e "${YELLOW}pip failed, using venv for Glances...${NC}"
-    python3 -m venv /opt/glances-venv
-    /opt/glances-venv/bin/pip install "glances[web]"
-}
-
-GLANCES_BIN=$(command -v glances 2>/dev/null || echo "/opt/glances-venv/bin/glances")
-echo -e "Glances: ${GREEN}$GLANCES_BIN${NC}"
-
+# ──── Instalar Glances em venv dedicado ────
 echo ""
-echo -e "${GREEN}[1/6]${NC} Creating virtual environment..."
+echo -e "${GREEN}[1/6]${NC} Installing Glances..."
+
+if [ -f "$GLANCES_VENV/bin/glances" ]; then
+    echo -e "  Glances: ${GREEN}already installed at $GLANCES_VENV${NC}"
+else
+    echo -e "  Creating venv at ${YELLOW}$GLANCES_VENV${NC}..."
+    python3 -m venv "$GLANCES_VENV"
+    "$GLANCES_VENV/bin/pip" install "glances[web]" --quiet
+    echo -e "  Glances: ${GREEN}installed${NC}"
+fi
+
+GLANCES_BIN="$GLANCES_VENV/bin/glances"
+echo -e "  Binary: ${YELLOW}$GLANCES_BIN${NC}"
+
+# ──── Instalar dependências do Dashboard ────
+echo ""
+echo -e "${GREEN}[2/6]${NC} Installing dashboard dependencies..."
 VENV_DIR="$SCRIPT_DIR/venv"
 python3 -m venv "$VENV_DIR"
 source "$VENV_DIR/bin/activate"
-
-echo -e "${GREEN}[2/6]${NC} Installing Python dependencies..."
 pip install -r "$SCRIPT_DIR/requirements.txt" --quiet
 
+# ──── Inicializar banco ────
+echo ""
 echo -e "${GREEN}[3/6]${NC} Initializing database..."
 python3 -c "from app.database import init_db; init_db()"
 
+# ──── Configurar systemd ────
+echo ""
 echo -e "${GREEN}[4/6]${NC} Configuring systemd services..."
 
-# Dashboard service
 cat > /tmp/glances-dashboard.service <<EOF
 [Unit]
 Description=Glances Dashboard
-After=network.target glances-web.service
-Requires=glances-web.service
+After=network.target
 
 [Service]
 Type=simple
@@ -67,7 +71,6 @@ Environment=GLANCES_DASH_SECRET=glances-dashboard-secret-change-me
 WantedBy=multi-user.target
 EOF
 
-# Glances Web service
 cat > /tmp/glances-web.service <<EOF
 [Unit]
 Description=Glances Web Interface
@@ -88,11 +91,15 @@ sudo cp /tmp/glances-dashboard.service /etc/systemd/system/
 sudo cp /tmp/glances-web.service /etc/systemd/system/
 sudo systemctl daemon-reload
 
-echo -e "${GREEN}[5/6]${NC} Enabling and starting services..."
+# ──── Iniciar serviços ────
+echo ""
+echo -e "${GREEN}[5/6]${NC} Starting services..."
 sudo systemctl enable glances-web.service glances-dashboard.service 2>/dev/null
 sudo systemctl restart glances-web.service
 sudo systemctl restart glances-dashboard.service
 
+# ──── Verificar status ────
+echo ""
 echo -e "${GREEN}[6/6]${NC} Checking status..."
 sleep 3
 
@@ -101,20 +108,19 @@ DASHBOARD_STATUS=$(systemctl is-active glances-dashboard.service 2>/dev/null || 
 
 echo ""
 if [ "$GLANCES_STATUS" = "active" ]; then
-    echo -e "  Glances Web:  ${GREEN}✓ $GLANCES_STATUS${NC}"
+    echo -e "  Glances Web:  ${GREEN}✓ $GLANCES_STATUS${NC} (port 61208)"
 else
     echo -e "  Glances Web:  ${RED}✗ $GLANCES_STATUS${NC}"
-    echo -e "  ${YELLOW}Logs: sudo journalctl -u glances-web -n 20${NC}"
+    echo -e "  ${YELLOW}Fix: sudo journalctl -u glances-web -n 20${NC}"
 fi
 
 if [ "$DASHBOARD_STATUS" = "active" ]; then
-    echo -e "  Dashboard:    ${GREEN}✓ $DASHBOARD_STATUS${NC}"
+    echo -e "  Dashboard:    ${GREEN}✓ $DASHBOARD_STATUS${NC} (port 8099)"
 else
     echo -e "  Dashboard:    ${RED}✗ $DASHBOARD_STATUS${NC}"
-    echo -e "  ${YELLOW}Logs: sudo journalctl -u glances-dashboard -n 20${NC}"
+    echo -e "  ${YELLOW}Fix: sudo journalctl -u glances-dashboard -n 20${NC}"
 fi
 
-# Detectar IP
 IP=$(hostname -I 2>/dev/null | awk '{print $1}')
 [ -z "$IP" ] && IP="localhost"
 
