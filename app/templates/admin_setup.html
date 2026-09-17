@@ -1,0 +1,325 @@
+{% extends "base.html" %}
+{% block title %}Instalação de Clientes - Admin{% endblock %}
+{% block body %}
+<nav class="topbar">
+  <div class="topbar-left">
+    <a href="/" class="btn-icon">←</a>
+    <h2>Instalação de Clientes</h2>
+    <span class="user-role-badge admin">admin</span>
+  </div>
+  <div class="topbar-right">
+    <span class="user-badge">{{ user.username }}</span>
+    <a href="/settings" class="btn-icon" title="Configurações">⚙</a>
+    <a href="/logout" class="btn-icon" title="Sair">⏻</a>
+  </div>
+</nav>
+
+<main class="main-content settings-page">
+  <div class="settings-section">
+    <h3>1. IP do Servidor</h3>
+    <p class="section-desc">Configure o IP público deste servidor para exibir nas instruções de firewall abaixo.</p>
+    <div class="setup-inline">
+      <label>IP do Servidor:
+        <input type="text" id="serverIp" value="{{ config.get('server_ip', '') }}" placeholder="Ex: 203.0.113.50" style="width:200px">
+      </label>
+      <button class="btn-primary" onclick="saveServerIp()" style="width:auto;padding:0.5rem 1rem">Salvar</button>
+      <span id="ipResult" style="font-size:0.82rem"></span>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <h3>2. Instalar Glances no Cliente</h3>
+    <p class="section-desc">Instale o Glances com suporte a API web (necessário para o dashboard).</p>
+
+    <div class="setup-block">
+      <h4>Docker (Recomendado - mais simples)</h4>
+      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copiar</button><code># Instalar Docker (se não tiver)
+sudo apt install -y docker.io
+sudo systemctl start docker
+sudo usermod -aG docker $USER
+
+# Criar container Glances
+docker run -d \
+  --name glances \
+  -p 61208:61208 \
+  -v /var/run/docker.sock:/var/run/docker.sock:ro \
+  --pid host \
+  --privileged \
+  --restart unless-stopped \
+  nicolargo/glances:latest-full \
+  glances -w -B 0.0.0.0
+
+# Verificar
+docker ps | grep glances
+curl -s http://localhost:61208/api/4/version</code></div>
+    </div>
+
+    <div class="setup-block">
+      <h4>Ubuntu 24.04+ (virtualenv)</h4>
+      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copiar</button><code># Instalar dependências
+sudo apt update
+sudo apt install -y python3-venv python3-pip
+
+# Criar ambiente virtual
+sudo mkdir -p /opt/glances
+sudo python3 -m venv /opt/glances/venv
+sudo /opt/glances/venv/bin/pip install --upgrade pip
+sudo /opt/glances/venv/bin/pip install "glances[web]"
+
+# Verificar instalação
+sudo /opt/glances/venv/bin/glances --version
+
+# Criar serviço systemd
+sudo tee /etc/systemd/system/glances-web.service > /dev/null << 'EOF'
+[Unit]
+Description=Glances Web Interface
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/glances
+ExecStart=/opt/glances/venv/bin/glances -w -B 0.0.0.0 -p 61208
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable glances-web
+sudo systemctl start glances-web
+
+# Verificar status
+sudo systemctl status glances-web
+curl -s http://localhost:61208/api/4/version</code></div>
+    </div>
+
+    <div class="setup-block">
+      <h4>Ubuntu 22.04 / Debian (virtualenv)</h4>
+      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copiar</button><code># Instalar dependências
+sudo apt update
+sudo apt install -y python3-venv python3-pip
+
+# Criar ambiente virtual
+sudo mkdir -p /opt/glances
+sudo python3 -m venv /opt/glances/venv
+sudo /opt/glances/venv/bin/pip install --upgrade pip
+sudo /opt/glances/venv/bin/pip install "glances[web]"
+
+# Verificar instalação
+sudo /opt/glances/venv/bin/glances --version
+
+# Criar serviço systemd
+sudo tee /etc/systemd/system/glances-web.service > /dev/null &lt;&lt; 'EOF'
+[Unit]
+Description=Glances Web Interface
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/glances
+ExecStart=/opt/glances/venv/bin/glances -w -B 0.0.0.0 -p 61208
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable glances-web
+sudo systemctl start glances-web
+
+# Verificar status
+sudo systemctl status glances-web
+curl -s http://localhost:61208/api/4/version</code></div>
+    </div>
+
+    <div class="setup-block">
+      <h4>CentOS / RHEL / Rocky</h4>
+      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copiar</button><code>sudo yum install -y python3-pip python3-virtualenv
+
+# Criar ambiente virtual
+sudo mkdir -p /opt/glances
+sudo virtualenv /opt/glances/venv
+sudo /opt/glances/venv/bin/pip install "glances[web]"
+
+# Criar serviço systemd
+sudo tee /etc/systemd/system/glances-web.service > /dev/null &lt;&lt; 'EOF'
+[Unit]
+Description=Glances Web Interface
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/glances
+ExecStart=/opt/glances/venv/bin/glances -w -B 0.0.0.0 -p 61208
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable glances-web
+sudo systemctl start glances-web</code></div>
+    </div>
+
+    <div class="setup-block">
+      <h4>Windows (via Winget)</h4>
+      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copiar</button><code># Abrir PowerShell como ADMINISTRADOR
+# Passo 1: Instalar Python via Winget
+winget install Python.Python.3.12
+
+# Fechar e reabrir PowerShell para atualizar PATH
+# Passo 2: Instalar Glances
+pip install "glances[web]"
+
+# Verificar instalação
+glances --version
+
+# Passo 3: Criar serviço Windows (opcional)
+pip install pywin32
+sc.exe create Glances binPath= "C:\Users\SEU_USUARIO\AppData\Local\Programs\Python\Python312\python.exe -m glances -w -B 0.0.0.0 -p 61208" start= auto
+sc.exe description Glances "Glances System Monitor Web Interface"
+net start Glances
+
+# Verificar se está rodando
+curl http://localhost:61208/api/4/version
+
+# Passo 4: Configurar firewall (liberar porta 61208)
+# Opção A: Liberar apenas para o IP do servidor (recomendado)
+netsh advfirewall firewall add rule name="Glances Web" protocol=TCP dir=in localport=61208 remoteip="{{ config.get('server_ip', 'IP_DO_SERVIDOR') }}" action=allow
+
+# Opção B: Liberar para qualquer IP (menos seguro)
+# netsh advfirewall firewall add rule name="Glances Web" protocol=TCP dir=in localport=61208 action=allow</code></div>
+    </div>
+  </div>
+  </div>
+
+  <div class="settings-section">
+    <h3>3. Configurar Firewall</h3>
+    <p class="section-desc">Libere a porta 61208 no firewall do cliente para que o servidor possa acessar.</p>
+
+    <div class="setup-block">
+      <h4>UFW (Ubuntu/Debian)</h4>
+      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copiar</button><code># Liberar apenas para o IP do servidor
+sudo ufw allow from {{ config.get('server_ip', 'IP_DO_SERVIDOR') }} to any port 61208
+
+# Ou liberar para qualquer IP (menos seguro)
+sudo ufw allow 61208
+sudo ufw reload</code></div>
+    </div>
+
+    <div class="setup-block">
+      <h4>firewalld (CentOS/RHEL)</h4>
+      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copiar</button><code>sudo firewall-cmd --permanent --add-rich-rule='
+  rule family="ipv4"
+  source address="{{ config.get('server_ip', 'IP_DO_SERVIDOR') }}"
+  port protocol="tcp" port="61208"
+  accept'
+sudo firewall-cmd --reload</code></div>
+    </div>
+
+    <div class="setup-block">
+      <h4>iptables</h4>
+      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copiar</button><code>sudo iptables -A INPUT -p tcp -s {{ config.get('server_ip', 'IP_DO_SERVIDOR') }} --dport 61208 -j ACCEPT
+sudo iptables-save | sudo tee /etc/iptables/rules.v4</code></div>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <h3>4. Testar Conexão</h3>
+    <p class="section-desc">Verifique se o Glances está respondendo no cliente.</p>
+    <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copiar</button><code># Testar a API do Glances
+curl -s http://IP_DO_CLIENTE:61208/api/4/version
+
+# Deve retornar algo como: "4.5.6"
+
+# Verificar dados do sistema
+curl -s http://IP_DO_CLIENTE:61208/api/4/system</code></div>
+
+    <div class="setup-block" style="margin-top:1rem">
+      <h4>Adicionar no Dashboard</h4>
+      <p>Vá em <a href="/settings">Configurações → Máquinas</a> e adicione:</p>
+      <ul class="setup-list">
+        <li><strong>Nome:</strong> Nome amigável da máquina</li>
+        <li><strong>Host:</strong> IP ou hostname do cliente</li>
+        <li><strong>Porta:</strong> 61208 (padrão)</li>
+      </ul>
+    </div>
+  </div>
+
+
+</main>
+
+<script>
+function copyCode(btn) {
+  var code = btn.parentElement.querySelector('code');
+  var text = code.textContent;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() {
+      showCopied(btn);
+    }).catch(function() {
+      fallbackCopy(btn, text);
+    });
+  } else {
+    fallbackCopy(btn, text);
+  }
+}
+
+function fallbackCopy(btn, text) {
+  var textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  try {
+    document.execCommand('copy');
+    showCopied(btn);
+  } catch(e) {
+    alert('Não foi possível copiar');
+  }
+  document.body.removeChild(textarea);
+}
+
+function showCopied(btn) {
+  btn.textContent = 'Copiado!';
+  btn.classList.add('copied');
+  setTimeout(function() {
+    btn.textContent = 'Copiar';
+    btn.classList.remove('copied');
+  }, 2000);
+}
+
+function saveServerIp() {
+  var ip = document.getElementById('serverIp').value.trim();
+  var result = document.getElementById('ipResult');
+  fetch('/api/system/config', {
+    method: 'PUT',
+    headers: {'Content-Type':'application/json','Authorization':'Bearer ' + getToken()},
+    body: JSON.stringify({configs: {server_ip: ip}})
+  }).then(function(r){return r.json()}).then(function(d){
+    result.style.color = 'var(--green)';
+    result.textContent = d.message || 'Salvo';
+  });
+}
+
+function getToken() {
+  var stored = localStorage.getItem('token');
+  if (stored) return stored;
+  var parts = document.cookie.split(';');
+  for (var i = 0; i < parts.length; i++) {
+    var c = parts[i].trim();
+    if (c.startsWith('token=')) return c.substring(6);
+  }
+  return '';
+}
+</script>
+{% endblock %}

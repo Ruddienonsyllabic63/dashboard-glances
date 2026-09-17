@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Alerta de CPU</title>
+</head>
+<body style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto;">
+    <div style="background: #fee2e2; border: 2px solid #ef4444; border-radius: 12px; padding: 20px;">
+        <h2 style="color: #dc2626; margin-top: 0;">⚠ Alerta de CPU</h2>
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <td style="padding: 8px 0; font-weight: bold; width: 120px;">🖥 Máquina:</td>
+                <td style="padding: 8px 0;">{{ machine_name }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 0; font-weight: bold;">📊 CPU Atual:</td>
+                <td style="padding: 8px 0; color: #dc2626; font-weight: bold; font-size: 18px;">{{ cpu_percent }}%</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 0; font-weight: bold;">🎯 Limite:</td>
+                <td style="padding: 8px 0;">{{ threshold }}%</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 0; font-weight: bold;">📅 Data/Hora:</td>
+                <td style="padding: 8px 0;">{{ timestamp }}</td>
+            </tr>
+        </table>
+        {% if top_process %}
+        <div style="margin-top: 15px; padding: 10px; background: #f3f4f6; border-radius: 8px;">
+            <strong>🔝 Top Processo:</strong> {{ top_process.user }} → {{ top_process.name }} ({{ top_process.cpu }}% CPU)
+        </div>
+        {% endif %}
+    </div>
+    <p style="color: #666; font-size: 12px; margin-top: 15px;">Glances Dashboard - Monitoramento Automático</p>
+</body>
+</html>

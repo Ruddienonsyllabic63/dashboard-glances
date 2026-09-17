@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% block title %}Logs - Glances Dashboard{% endblock %}
+{% block body %}
+<nav class="topbar">
+  <div class="topbar-left">
+    <a href="/" class="btn-icon">←</a>
+    <h2>{{ translations.logs.title }}</h2>
+  </div>
+  <div class="topbar-right">
+    <span class="user-badge">{{ user.username }} <span class="user-role-badge {{ user.role }}">{{ user.role }}</span></span>
+    <a href="/logout" class="btn-icon" title="Sair">⏻</a>
+  </div>
+</nav>
+
+<main class="main-content logs-page">
+  <div class="logs-tabs">
+    <button class="tab-btn active" onclick="switchTab('tab-logs')">📊 Logs</button>
+    {% if user.role == 'admin' %}
+    <button class="tab-btn" onclick="switchTab('tab-config')">⚙ Configuração</button>
+    {% endif %}
+  </div>
+
+  <div class="tab-panel active" id="tab-logs">
+    <div class="logs-topbar">
+      <div class="logs-filters">
+        <input type="text" id="logSearch" placeholder="Buscar máquina, processo..." onkeyup="debounceSearch()" style="width:220px">
+        <select id="logMachineFilter" onchange="loadLogs()">
+          <option value="">{{ translations.logs.all_machines }}</option>
+        </select>
+        <input type="date" id="logDateFrom" onchange="loadLogs()">
+        <input type="date" id="logDateTo" onchange="loadLogs()">
+        <label class="filter-item" style="margin-left:0.5rem"><input type="checkbox" id="logAlertsOnly" onchange="loadLogs()"> Apenas Alertas</label>
+        <button class="btn-secondary" onclick="loadLogs()">{{ translations.logs.filters }}</button>
+      </div>
+      {% if user.role == 'admin' %}
+      <div class="logs-actions">
+        <button class="btn-secondary" onclick="forceCollect()">{{ translations.logs.collect_now }}</button>
+        <button class="btn-danger" onclick="clearLogs()">{{ translations.logs.clear_logs }}</button>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="logs-stats" id="logsStats">
+      <div class="overview-stat"><span class="stat-value" id="statTotalLogs">0</span><span class="stat-label">{{ translations.logs.total }}</span></div>
+      <div class="overview-stat"><span class="stat-value" id="statAvgCPU">0%</span><span class="stat-label">{{ translations.logs.avg_cpu }}</span></div>
+      <div class="overview-stat"><span class="stat-value" id="statAvgMem">0%</span><span class="stat-label">{{ translations.logs.avg_mem }}</span></div>
+      <div class="overview-stat"><span class="stat-value" id="statMaxCPU">0%</span><span class="stat-label">{{ translations.logs.max_cpu }}</span></div>
+      <div class="overview-stat alert-stat"><span class="stat-value" id="statAlerts">0</span><span class="stat-label">{{ translations.logs.alerts }}</span></div>
+    </div>
+
+    <div class="logs-chart-container">
+      <h3>{{ translations.logs.chart_title }}</h3>
+      <canvas id="logsChart" height="100"></canvas>
+    </div>
+
+    <div class="logs-table-container">
+      <div class="logs-table-header">
+        <h3>{{ translations.logs.data_table }}</h3>
+        <div class="pagination-info" id="paginationInfo"></div>
+      </div>
+      <table class="data-table" id="logsTable">
+        <thead>
+          <tr>
+            <th>{{ translations.logs.date_time }}</th>
+            <th>{{ translations.logs.machine }}</th>
+            <th>{{ translations.logs.status }}</th>
+            <th>{{ translations.dashboard.cpu_pct }}</th>
+            <th>{{ translations.dashboard.mem_pct }}</th>
+            <th>{{ translations.logs.load }}</th>
+            <th>{{ translations.logs.disk_pct }}</th>
+            <th>{{ translations.logs.proc_count }}</th>
+            <th>{{ translations.logs.top_process }}</th>
+            <th>{{ translations.logs.alerts }}</th>
+          </tr>
+        </thead>
+        <tbody id="logsBody"></tbody>
+      </table>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tab-config">
+    <div class="settings-section">
+      <h3>{{ translations.logs.what_to_monitor }}</h3>
+      <div class="monitor-select-grid">
+        <div class="monitor-select-block">
+          <div class="filter-subheader">{{ translations.logs.select_machines }}</div>
+          <div id="monitorMachineList" class="monitor-check-list"></div>
+        </div>
+        <div class="monitor-select-block">
+          <div class="filter-subheader">{{ translations.logs.metrics }}</div>
+          <div class="monitor-check-list">
+            <label class="filter-item"><input type="checkbox" id="mCPU" checked> CPU %</label>
+            <label class="filter-item"><input type="checkbox" id="mMEM" checked> Memória</label>
+            <label class="filter-item"><input type="checkbox" id="mDISK" checked> Disco</label>
+            <label class="filter-item"><input type="checkbox" id="mLOAD" checked> Load Average</label>
+            <label class="filter-item"><input type="checkbox" id="mPROCS" checked> Top Processos</label>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:0.75rem;display:flex;gap:0.75rem;align-items:center">
+        <button class="btn-primary" onclick="saveMonitorSelection()" style="width:auto;padding:0.5rem 1.2rem">{{ translations.logs.save_selection }}</button>
+        <span id="selectResult" style="font-size:0.85rem"></span>
+      </div>
+    </div>
+
+    <div class="settings-section" style="margin-top:1rem">
+      <h3>{{ translations.logs.config }} do Monitor</h3>
+      <div class="monitor-config-form">
+        <label>Intervalo (minutos):
+          <input type="number" id="monitorInterval" min="1" value="5">
+        </label>
+        <label>Retenção (meses):
+          <input type="number" id="monitorRetention" min="1" value="3">
+        </label>
+        <label>Limite de Processos Total (0=desativado):
+          <input type="number" id="monitorThreshold" min="0" value="0" style="width:80px">
+        </label>
+      </div>
+    </div>
+
+    <div class="settings-section" style="margin-top:1rem">
+      <h3>🚨 Alertas de Threshold</h3>
+      <p style="font-size:0.8rem;color:var(--text-muted)">Configure os limites e quais alertas deseja receber.</p>
+      <div class="monitor-config-form" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem">
+        <div>
+          <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem">
+            <input type="checkbox" id="alertCpu"> <strong>📊 CPU</strong>
+          </label>
+          <label>Limite CPU (%):
+            <input type="number" id="cpuThreshold" min="0" max="100" value="90" style="width:80px">
+          </label>
+        </div>
+        <div>
+          <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem">
+            <input type="checkbox" id="alertMem"> <strong>💾 Memória</strong>
+          </label>
+          <label>Limite Mem (%):
+            <input type="number" id="memThreshold" min="0" max="100" value="90" style="width:80px">
+          </label>
+        </div>
+        <div>
+          <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem">
+            <input type="checkbox" id="alertDisk"> <strong>💿 Disco</strong>
+          </label>
+          <label>Limite Disco (%):
+            <input type="number" id="diskThreshold" min="0" max="100" value="90" style="width:80px">
+          </label>
+        </div>
+        <div>
+          <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem">
+            <input type="checkbox" id="alertProcess"> <strong>📈 Processos</strong>
+          </label>
+          <label style="font-size:0.75rem;color:var(--text-muted)">Usa limite acima</label>
+        </div>
+        <div>
+          <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem">
+            <input type="checkbox" id="alertPerUser"> <strong>👤 Por Usuário</strong>
+          </label>
+          <label style="font-size:0.75rem;color:var(--text-muted)">Monitora usuários específicos</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section" style="margin-top:1rem">
+      <h3>{{ translations.logs.per_user_limit }}</h3>
+      <p style="font-size:0.8rem;color:var(--text-muted)">Selecione os usuários para monitorar. O alerta dispara quando o usuário selecionado tiver mais processos que o limite.</p>
+      <div class="monitor-config-form">
+        <label>Limite (0=desativado):
+          <input type="number" id="monitorPerUserThreshold" min="0" value="0" style="width:80px">
+        </label>
+      </div>
+      <div style="margin-top:1rem">
+        <div class="filter-subheader">{{ translations.logs.selected_users }}</div>
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.5rem;flex-wrap:wrap">
+          <input type="text" id="perUserCustom" placeholder="Digite e pressione Enter" style="width:200px;padding:0.3rem;font-size:0.8rem" onkeydown="if(event.key==='Enter'){event.preventDefault();addPerUserCustom();}">
+          <button class="btn-secondary" id="btnAddUser" style="padding:0.3rem 0.8rem;font-size:0.8rem">{{ translations.logs.add_user }}</button>
+        </div>
+        <div id="perUserCheckboxes" style="max-height:150px;overflow-y:auto;display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.5rem"></div>
+        <div style="margin-top:0.8rem">
+          <div class="filter-subheader" style="font-size:0.75rem">Usuários detectados nos logs (clique para adicionar):</div>
+          <div id="perUserDetected" style="max-height:100px;overflow-y:auto;display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.3rem"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section" style="margin-top:1rem;display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap">
+      <label><input type="checkbox" id="monitorEnabled" checked> Monitor Ativo</label>
+      <button class="btn-primary" onclick="saveMonitorConfig()" style="width:auto;padding:0.5rem 1.2rem">{{ translations.logs.save_config }}</button>
+      <span id="monitorConfigResult" style="font-size:0.85rem"></span>
+      <span style="font-size:0.75rem;color:var(--text-muted)">⚠ Lembre-se de salvar após alterar os usuários</span>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="/static/js/i18n.js"></script>
+<script src="/static/js/logs.js"></script>
+<script>document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('btnAddUser').onclick = addPerUserCustom;
+  document.getElementById('perUserCustom').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); addPerUserCustom(); }
+  });
+  initLogs();
+});</script>
+{% endblock %}

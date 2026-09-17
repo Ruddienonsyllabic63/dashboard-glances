@@ -1,0 +1,13 @@
+[Unit]
+Description=Glances Web Interface
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/bin/bash -c 'hash -r && glances -w'
+Restart=always
+RestartSec=5
+Environment=GLANCES_BIND=0.0.0.0
+
+[Install]
+WantedBy=multi-user.target

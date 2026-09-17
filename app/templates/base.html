@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="{{ current_lang }}" data-theme="{{ config.get('theme', 'dark') }}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="/static/uploads/{{ config.get('logo_file', 'default.svg') }}">
+<title>{% block title %}Glances Dashboard{% endblock %}</title>
+<link rel="stylesheet" href="/static/css/style.css">
+<script>
+// Language management - MUST be before any other scripts
+(function() {
+  var lang = document.documentElement.lang || '{{ current_lang }}';
+  window.__lang = lang;
+  window.__translations = {{ translations | tojson }};
+  document.cookie = "lang=" + lang + ";path=/;max-age=31536000";
+  window.t = function(key, fallback) {
+    var keys = key.split('.');
+    var obj = window.__translations;
+    for (var i = 0; i < keys.length; i++) {
+      if (obj && obj[keys[i]] !== undefined) {
+        obj = obj[keys[i]];
+      } else {
+        return fallback || key;
+      }
+    }
+    return obj;
+  };
+  // Set data-lang after DOM is ready
+  if (document.body) {
+    document.body.setAttribute('data-lang', lang);
+  } else {
+    document.addEventListener('DOMContentLoaded', function() {
+      document.body.setAttribute('data-lang', lang);
+    });
+  }
+})();
+</script>
+</head>
+<body>
+{% block body %}{% endblock %}
+<script src="/static/js/i18n.js"></script>
+{% block extra_js %}{% endblock %}
+<!-- Language Selector -->
+<div id="langSelectorHtml" style="position:fixed;top:10px;right:10px;z-index:9999;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.25rem;">
+  <select id="langSelector" onchange="changeLanguage(this.value)" style="background:transparent;color:var(--text-primary);border:none;cursor:pointer;font-size:0.875rem;">
+    <option value="pt" {% if current_lang == 'pt' %}selected{% endif %}>🇧🇷 PT</option>
+    <option value="en" {% if current_lang == 'en' %}selected{% endif %}>🇺🇸 EN</option>
+  </select>
+</div>
+<script>
+function changeLanguage(lang) {
+  document.cookie = "lang=" + lang + ";path=/;max-age=31536000";
+  var url = new URL(window.location.href);
+  url.searchParams.set('lang', lang);
+  window.location.href = url.toString();
+}
+</script>
+</body>
+</html>

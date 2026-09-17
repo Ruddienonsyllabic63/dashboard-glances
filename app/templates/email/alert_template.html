@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 20px; }
+    .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .header { background: #dc3545; color: white; padding: 20px; text-align: center; }
+    .header h1 { margin: 0; font-size: 24px; }
+    .content { padding: 20px; }
+    .info-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    .info-table th { text-align: left; padding: 12px; background: #f8f9fa; border-bottom: 2px solid #dee2e6; width: 40%; }
+    .info-table td { padding: 12px; border-bottom: 1px solid #dee2e6; }
+    .user-badge { display: inline-block; background: #007bff; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+    .process-badge { display: inline-block; background: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; margin-left: 8px; }
+    .footer { background: #f8f9fa; padding: 15px; text-align: center; font-size: 12px; color: #6c757d; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>⚠️ Alerta de Processos</h1>
+    </div>
+    <div class="content">
+      <p>Uma máquina atingiu o limite de processos configurado.</p>
+      
+      <table class="info-table">
+        <tr>
+          <th>🖥 Máquina</th>
+          <td>{{ machine_name }}</td>
+        </tr>
+        <tr>
+          <th>👤 Usuário Alertado</th>
+          <td>{% if users %}{% for u in users %}<span class="user-badge">{{ u }}</span>{% endfor %}{% else %}-{% endif %}</td>
+        </tr>
+        <tr>
+          <th>🔝 Top Processo</th>
+          <td><strong>{{ top_process }}</strong></td>
+        </tr>
+        <tr>
+          <th>📊 Processos Total</th>
+          <td><strong>{{ process_count }}</strong></td>
+        </tr>
+        <tr>
+          <th>🎯 Limite Configurado</th>
+          <td>{{ threshold }} processos</td>
+        </tr>
+        <tr>
+          <th>📈 CPU</th>
+          <td>{{ cpu_percent }}%</td>
+        </tr>
+        <tr>
+          <th>💾 Memória</th>
+          <td>{{ mem_percent }}%</td>
+        </tr>
+        <tr>
+          <th>💿 Disco</th>
+          <td>{{ disk_percent }}%</td>
+        </tr>
+        <tr>
+          <th>📅 Data/Hora</th>
+          <td>{{ timestamp }}</td>
+        </tr>
+      </table>
+
+      {% if top_processes %}
+      <h3>🔝 Top 5 Processos</h3>
+      <table class="info-table">
+        {% for p in top_processes %}
+        <tr>
+          <th>{{ loop.index }}.</th>
+          <td>
+            <strong>{{ p.name }}</strong> <span class="process-badge">{{ p.user }}</span><br>
+            <small>CPU: {{ p.cpu }}% | Mem: {{ p.mem }}%</small>
+          </td>
+        </tr>
+        {% endfor %}
+      </table>
+      {% endif %}
+    </div>
+    <div class="footer">
+      <p>Glances Dashboard - Monitoramento de Sistemas</p>
+    </div>
+  </div>
+</body>
+</html>

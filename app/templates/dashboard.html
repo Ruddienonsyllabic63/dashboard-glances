@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Glances Dashboard{% endblock %}
+{% block body %}
+<nav class="topbar">
+  <div class="topbar-left">
+    <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+    <h2>{{ translations.dashboard.title }}</h2>
+  </div>
+  <div class="topbar-right">
+    <select id="layoutSelector" onchange="loadLayout(this.value)" style="max-width:150px">
+      <option value="default">{{ translations.layouts.default }}</option>
+    </select>
+    <button class="btn-topbar" onclick="saveCurrentLayout()" title="Salvar layout">💾</button>
+    <button class="btn-topbar" onclick="deleteCurrentLayout()" title="Excluir layout">🗑</button>
+    <select id="templateSelector" onchange="changeTemplate(this.value)">
+      <option value="grid">{{ translations.dashboard.templates.grid }}</option>
+      <option value="list">{{ translations.dashboard.templates.list }}</option>
+      <option value="cards">{{ translations.dashboard.templates.cards }}</option>
+      <option value="compact">{{ translations.dashboard.templates.compact }}</option>
+    </select>
+    <button class="btn-icon" onclick="refreshAll()" title="Atualizar">⟳</button>
+    <span class="user-badge">{{ user.username }} <span class="user-role-badge {{ user.role }}">{{ user.role }}</span></span>
+    <span class="theme-toggle" onclick="toggleTheme()" title="Alternar tema" id="themeBtn">{{ '☀️' if config.get('theme','dark') == 'dark' else '🌙' }}</span>
+    <a href="/logs" class="btn-icon" title="Logs">📊</a>
+    {% if user.role == 'admin' %}
+    <a href="/settings" class="btn-icon" title="Configurações">⚙</a>
+    {% endif %}
+    <a href="/logout" class="btn-icon" title="Sair">⏻</a>
+  </div>
+</nav>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-section">
+    <h3>{{ translations.sidebar.display }}</h3>
+    <div class="filter-group">
+      <label><input type="checkbox" id="filterCPU" checked onchange="applyFilters()"> {{ translations.dashboard.cpu }}</label>
+      <label><input type="checkbox" id="filterMem" checked onchange="applyFilters()"> {{ translations.dashboard.memory }}</label>
+      <label><input type="checkbox" id="filterDisk" checked onchange="applyFilters()"> {{ translations.dashboard.disk }}</label>
+      <label><input type="checkbox" id="filterNet" checked onchange="applyFilters()"> {{ translations.dashboard.network }}</label>
+      <label><input type="checkbox" id="filterProc" checked onchange="applyFilters()"> {{ translations.dashboard.procs }}</label>
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <h3>{{ translations.dashboard.sort_by }}</h3>
+    <select id="sortBy" onchange="applyFilters()">
+      <option value="name">{{ translations.dashboard.name }}</option>
+      <option value="cpu">{{ translations.dashboard.cpu_pct }}</option>
+      <option value="mem">{{ translations.dashboard.mem_pct }}</option>
+      <option value="status">{{ translations.dashboard.status }}</option>
+    </select>
+  </div>
+  <div class="sidebar-section">
+    <h3 style="cursor:pointer;display:flex;align-items:center;gap:0.5rem;user-select:none" onclick="toggleMachinesSection()">
+      <span id="machinesExpandIcon" style="font-size:0.65rem">▼</span> {{ translations.sidebar.machines }}
+      <span id="machineCount" style="color:var(--text-muted);font-size:0.7rem;margin-left:auto"></span>
+    </h3>
+    <div id="machinesListContainer" style="overflow:hidden;transition:max-height 0.3s ease">
+      <div style="display:flex;gap:0.5rem;margin-bottom:0.4rem;margin-top:0.4rem">
+        <button class="btn-filter-action" onclick="toggleAllMachines(true)">{{ translations.common.yes }}</button>
+        <button class="btn-filter-action" onclick="toggleAllMachines(false)">{{ translations.common.no }}</button>
+      </div>
+      <div id="machineFilter"></div>
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <h3>{{ translations.settings.title }}</h3>
+    <p style="font-size:0.72rem;color:var(--text-muted);line-height:1.5">Clique em <strong>⚙ Filtros</strong> no cabeçalho de cada máquina para selecionar usuários e processos.</p>
+    <div style="display:flex;gap:0.4rem;margin-top:0.5rem;flex-wrap:wrap">
+      <button class="btn-filter-action" onclick="toggleAllPerMachineGlobal('user',true)">Users All</button>
+      <button class="btn-filter-action" onclick="toggleAllPerMachineGlobal('user',false)">Users None</button>
+      <button class="btn-filter-action" onclick="toggleAllPerMachineGlobal('proc',true)">Proc All</button>
+      <button class="btn-filter-action" onclick="toggleAllPerMachineGlobal('proc',false)">Proc None</button>
+    </div>
+  </div>
+  {% if user.role == 'admin' %}
+  <div class="sidebar-section">
+    <h3>{{ translations.sidebar.admins }}</h3>
+    <a href="/admin/setup">{{ translations.settings.install }}</a>
+    <a href="/admin/alerts">{{ translations.alerts.title }}</a>
+  </div>
+  {% endif %}
+  <div class="sidebar-section">
+    <h3>{{ translations.common.profile }}</h3>
+    <a href="/settings">{{ translations.settings.title }}</a>
+    <a href="/logout">{{ translations.sidebar.logout }}</a>
+  </div>
+</aside>
+
+<main class="main-content" id="mainContent">
+  <div class="overview-bar" id="overviewBar">
+    <div class="overview-stat"><span class="stat-value" id="statTotal">0</span><span class="stat-label">Total</span></div>
+    <div class="overview-stat online"><span class="stat-value" id="statOnline">0</span><span class="stat-label">Online</span></div>
+    <div class="overview-stat offline"><span class="stat-value" id="statOffline">0</span><span class="stat-label">Offline</span></div>
+    <div class="overview-stat"><span class="stat-value" id="statAvgCPU">0%</span><span class="stat-label">CPU Médio</span></div>
+    <div class="overview-stat"><span class="stat-value" id="statAvgMem">0%</span><span class="stat-label">Mem Média</span></div>
+  </div>
+  <div class="dashboard-grid" id="dashboardGrid"></div>
+</main>
+
+<div class="modal-overlay" id="layoutModal" style="display:none" onclick="closeLayoutModal(event)">
+  <div class="modal-card">
+    <h3>Salvar Layout</h3>
+    <select id="layoutActionSelect" onchange="toggleLayoutNameInput()" style="width:100%;padding:0.5rem;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px">
+      <option value="new">Criar novo layout</option>
+      <option value="update">Atualizar layout existente</option>
+    </select>
+    <input type="text" id="layoutNameInput" placeholder="Nome do novo layout" maxlength="50" style="margin-top:0.5rem">
+    <select id="layoutUpdateSelect" style="width:100%;padding:0.5rem;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;margin-top:0.5rem;display:none">
+    </select>
+    <select id="layoutBaseSelect" style="width:100%;padding:0.5rem;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;margin-top:0.5rem">
+      <option value="">Copiar do zero</option>
+    </select>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeLayoutModal()">Cancelar</button>
+      <button class="btn-primary" onclick="confirmSaveLayout()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var CURRENT_THEME = "{{ config.get('theme', 'dark') }}";
+function toggleTheme() {
+  var next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', next);
+  document.getElementById('themeBtn').textContent = next === 'dark' ? '☀️' : '🌙';
+  fetch('/api/system/config', {
+    method: 'PUT',
+    headers: {'Content-Type':'application/json','Authorization':'Bearer ' + (localStorage.getItem('token') || '')},
+    body: JSON.stringify({configs: {theme: next}})
+  });
+}
+</script>
+<script src="/static/js/dashboard.js"></script>
+<script>
+  initDashboard('{{ user.username }}');
+</script>
+{% endblock %}

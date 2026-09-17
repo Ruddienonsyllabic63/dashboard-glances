@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}Alertas & Notificações - Admin{% endblock %}
+{% block body %}
+<nav class="topbar">
+  <div class="topbar-left">
+    <a href="/" class="btn-icon">←</a>
+    <h2>Alertas & Notificações</h2>
+    <span class="user-role-badge admin">admin</span>
+  </div>
+  <div class="topbar-right">
+    <span class="user-badge">{{ user.username }}</span>
+    <a href="/settings" class="btn-icon" title="Configurações">⚙</a>
+    <a href="/logout" class="btn-icon" title="Sair">⏻</a>
+  </div>
+</nav>
+
+<main class="main-content settings-page">
+  <div class="settings-section">
+    <h3>📧 Configuração de E-mail (SMTP)</h3>
+    <p class="section-desc">Configure o servidor SMTP para envio de alertas e recuperação de senha.</p>
+    <div class="config-grid">
+      <label><input type="checkbox" id="smtpEnabled"> Ativar envio de e-mail</label>
+      <label>Host SMTP:
+        <input type="text" id="smtpHost" value="{{ config.get('smtp_host', 'smtp.gmail.com') }}" style="width:200px">
+      </label>
+      <label>Porta:
+        <input type="number" id="smtpPort" value="{{ config.get('smtp_port', '587') }}" style="width:80px">
+      </label>
+      <label>Usuário:
+        <input type="text" id="smtpUser" value="{{ config.get('smtp_user', '') }}" placeholder="seu@email.com" style="width:250px">
+      </label>
+      <label>Senha:
+        <input type="password" id="smtpPassword" value="{{ config.get('smtp_password', '') }}" placeholder="Senha ou App Password" style="width:250px">
+      </label>
+      <label>E-mail remetente:
+        <input type="email" id="smtpFrom" value="{{ config.get('smtp_from', '') }}" placeholder="noreply@seudominio.com" style="width:250px">
+      </label>
+      <label><input type="checkbox" id="smtpUseTls" {{ 'checked' if config.get('smtp_use_tls', 'true') == 'true' }}> Usar TLS</label>
+    </div>
+    <div style="margin-top:1rem;display:flex;gap:0.75rem;align-items:center">
+      <button class="btn-primary" onclick="saveSmtp()" style="width:auto;padding:0.5rem 1.2rem">Salvar SMTP</button>
+      <button class="btn-secondary" onclick="testEmail()" style="width:auto;padding:0.5rem 1.2rem">Testar E-mail</button>
+      <span id="smtpResult" style="font-size:0.85rem"></span>
+    </div>
+
+    <div class="info-box" style="margin-top:1rem">
+      <strong>Gmail:</strong> Use uma <a href="https://myaccount.google.com/apppasswords" target="_blank">Senha de App</a> (não sua senha normal).<br>
+      <strong>Outlook:</strong> Host <code>smtp.office365.com</code>, porta 587.<br>
+      <strong>SMTP local:</strong> Use <code>localhost</code> e porta 25.
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <h3>🤖 Configuração do Telegram Bot</h3>
+    <p class="section-desc">Receba alertas em tempo real via Telegram.</p>
+
+    <div class="setup-block">
+      <h4>Como criar o Bot:</h4>
+      <ol class="setup-list">
+        <li>Abra o Telegram e procure por <a href="https://t.me/BotFather" target="_blank">@BotFather</a></li>
+        <li>Envie <code>/newbot</code></li>
+        <li>Dê um nome para o bot (ex: <code>Glances Alert Bot</code>)</li>
+        <li>Dê um username (ex: <code>meu_glances_bot</code>)</li>
+        <li>Copie o <strong>token</strong> fornecido pelo BotFather</li>
+        <li>Para obter seu <strong>chat_id</strong>, envie qualquer mensagem para o bot e acesse:
+          <br><code>https://api.telegram.org/bot&lt;SEU_TOKEN&gt;/getUpdates</code>
+          <br>Procure por <code>"chat":{"id":</code> no resultado</li>
+      </ol>
+    </div>
+
+    <div class="config-grid">
+      <label><input type="checkbox" id="tgEnabled"> Ativar alertas Telegram</label>
+      <label>Token do Bot:
+        <input type="text" id="tgToken" value="{{ config.get('telegram_bot_token', '') }}" placeholder="123456:ABC-DEF..." style="width:350px">
+      </label>
+      <label>Chat IDs permitidos (um por linha):
+        <textarea id="tgAllowed" rows="4" placeholder="123456789&#10;987654321" style="width:350px;font-family:monospace">{{ config.get('telegram_allowed_users', '[]').replace('[','').replace(']','').replace(',','\n').replace('"','') }}</textarea>
+      </label>
+    </div>
+    <div style="margin-top:1rem;display:flex;gap:0.75rem;align-items:center">
+      <button class="btn-primary" onclick="saveTelegram()" style="width:auto;padding:0.5rem 1.2rem">Salvar Telegram</button>
+      <button class="btn-secondary" onclick="testTelegram()" style="width:auto;padding:0.5rem 1.2rem">Testar Bot</button>
+      <span id="tgResult" style="font-size:0.85rem"></span>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <h3>📊 Resumo de Alertas</h3>
+    <div class="logs-stats" id="alertStats">
+      <div class="overview-stat"><span class="stat-value" id="statMachines">0</span><span class="stat-label">Máquinas</span></div>
+      <div class="overview-stat"><span class="stat-value" id="statTotalLogs">0</span><span class="stat-label">Total Logs</span></div>
+      <div class="overview-stat alert-stat"><span class="stat-value" id="statAlerts">0</span><span class="stat-label">Alertas</span></div>
+      <div class="overview-stat"><span class="stat-value" id="statOffline">0</span><span class="stat-label">Offline</span></div>
+    </div>
+  </div>
+</main>
+
+<script>
+var TOKEN = (function(){
+  var s = localStorage.getItem('token');
+  if (s) return s;
+  var p = document.cookie.split(';');
+  for (var i=0;i<p.length;i++){var c=p[i].trim();if(c.startsWith('token='))return c.substring(6);}
+  return '';
+})();
+
+function api(method, path, body) {
+  var opts = {method:method,headers:{'Content-Type':'application/json','Authorization':'Bearer '+TOKEN}};
+  if(body) opts.body=JSON.stringify(body);
+  return fetch('/api'+path,opts).then(function(r){return r.json()});
+}
+
+function saveSmtp() {
+  var r = document.getElementById('smtpResult');
+  api('PUT','/system/config',{configs:{
+    smtp_enabled: document.getElementById('smtpEnabled').checked+'',
+    smtp_host: document.getElementById('smtpHost').value,
+    smtp_port: document.getElementById('smtpPort').value,
+    smtp_user: document.getElementById('smtpUser').value,
+    smtp_password: document.getElementById('smtpPassword').value,
+    smtp_from: document.getElementById('smtpFrom').value,
+    smtp_use_tls: document.getElementById('smtpUseTls').checked+''
+  }}).then(function(d){
+    r.style.color='var(--green)'; r.textContent=d.message||'Salvo';
+  });
+}
+
+function testEmail() {
+  var r = document.getElementById('smtpResult');
+  r.style.color='var(--text-muted)'; r.textContent='Enviando...';
+  api('POST','/alerts/test-email').then(function(d){
+    r.style.color = d.success ? 'var(--green)' : 'var(--red)';
+    r.textContent = d.success ? 'E-mail enviado com sucesso!' : ('Erro: '+d.error);
+  });
+}
+
+function saveTelegram() {
+  var r = document.getElementById('tgResult');
+  var allowed = document.getElementById('tgAllowed').value.split('\n').map(function(s){return s.trim()}).filter(Boolean);
+  api('PUT','/system/config',{configs:{
+    telegram_enabled: document.getElementById('tgEnabled').checked+'',
+    telegram_bot_token: document.getElementById('tgToken').value,
+    telegram_allowed_users: JSON.stringify(allowed)
+  }}).then(function(d){
+    r.style.color='var(--green)'; r.textContent=d.message||'Salvo';
+  });
+}
+
+function testTelegram() {
+  var r = document.getElementById('tgResult');
+  r.style.color='var(--text-muted)'; r.textContent='Testando...';
+  api('POST','/alerts/test-telegram').then(function(d){
+    r.style.color = d.success ? 'var(--green)' : 'var(--red)';
+    r.textContent = d.success ? ('Bot @'+d.bot_name+' (ID: '+d.bot_id+') conectado!') : ('Erro: '+d.error);
+  });
+}
+
+api('GET','/alerts/stats').then(function(s){
+  document.getElementById('statMachines').textContent = s.machines||0;
+  document.getElementById('statTotalLogs').textContent = s.total_logs||0;
+  document.getElementById('statAlerts').textContent = s.alerts||0;
+  document.getElementById('statOffline').textContent = s.offline||0;
+});
+
+api('GET','/system/config').then(function(cfg){
+  document.getElementById('smtpEnabled').checked = cfg.smtp_enabled === 'true';
+  document.getElementById('smtpUseTls').checked = cfg.smtp_use_tls === 'true';
+  document.getElementById('tgEnabled').checked = cfg.telegram_enabled === 'true';
+});
+</script>
+{% endblock %}
