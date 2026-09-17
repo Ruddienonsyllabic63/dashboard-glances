@@ -2,88 +2,89 @@
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?logo=fastapi&logoColor=white)
+![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0+-D71F00?logo=sqlalchemy&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green)
 ![Status](https://img.shields.io/badge/Status-Stable-brightgreen)
 
-Painel de monitoramento web para [Glances](https://nicolargo.github.io/glances/) com suporte a múltiplas máquinas, alertas, backups e internacionalização.
+A web monitoring dashboard for [Glances](https://nicolargo.github.io/glances/) with multi-machine support, alerts, backups, and internationalization.
 
 ---
 
 ## Features
 
-- **Dashboard em tempo real** — CPU, memória, disco, rede e processos
-- **Múltiplos templates** — Grid, lista, cards e compacto
-- **Múltiplas máquinas** — Monitore vários servidores Glances ao mesmo tempo
-- **Sistema de alertas** — SMTP (email) e Telegram com limiares configuráveis
-- **Monitoramento periódico** — Coleta automática de dados com gráficos
-- **Backup e restauração** — Export/import do banco de dados completo
-- **Filtros avançados** — Por máquina, data, status e processos
-- **Controle de acesso** — Usuários admin e viewer com perfis
-- **Internacionalização** — Português e Inglês
-- **Temas** — Dark (padrão) e Light
-- **Instalação de clientes** — GUIA completo para instalar Glances nos clientes
-- **Configuração via web** — Tudo configurável pela interface
+- **Real-time dashboard** — CPU, memory, disk, network, and processes
+- **Multiple templates** — Grid, list, cards, and compact views
+- **Multi-machine monitoring** — Monitor multiple Glances servers simultaneously
+- **Alert system** — SMTP (email) and Telegram with configurable thresholds
+- **Periodic monitoring** — Automatic data collection with charts
+- **Backup & restore** — Full database export/import with ZIP download
+- **Advanced filters** — By machine, date, status, and processes
+- **Access control** — Admin and viewer users with profiles
+- **Internationalization** — Portuguese and English
+- **Themes** — Dark (default) and Light
+- **Client installation guide** — Complete guide for installing Glances on clients
+- **Web-based configuration** — Everything configurable through the interface
 
 ---
 
-## Pré-requisitos
+## Prerequisites
 
 - Python 3.10+
-- [Glances](https://nicolargo.github.io/glances/) com API web habilitada (`glances -w`)
+- [Glances](https://nicolargo.github.io/glances/) with web API enabled (`glances -w`)
 - pip3
 
 ---
 
-## Instalação Rápida
+## Quick Install
 
 ```bash
-git clone https://github.com/SEU_USER/dashboard-glances.git
+git clone https://github.com/renanvignato-tech/dashboard-glances.git
 cd dashboard-glances
 chmod +x install.sh
 ./install.sh
 ```
 
-Acesse: `http://SEU_IP:8099`
+Access: `http://YOUR_IP:8099`
 
-Login padrão: **admin** / **admin**
+Default login: **admin** / **admin**
 
 ---
 
-## Instalação Manual
+## Manual Install
 
-### 1. Clonar o repositório
+### 1. Clone the repository
 
 ```bash
-git clone https://github.com/SEU_USER/dashboard-glances.git
+git clone https://github.com/renanvignato-tech/dashboard-glances.git
 cd dashboard-glances
 ```
 
-### 2. Instalar dependências
+### 2. Install dependencies
 
 ```bash
 pip3 install -r requirements.txt
 ```
 
-### 3. Inicializar o banco de dados
+### 3. Initialize the database
 
 ```bash
 python3 -c "from app.database import init_db; init_db()"
 ```
 
-### 4. Configurar serviços systemd
+### 4. Configure systemd services
 
 ```bash
-# Copiar arquivos de serviço
+# Copy service files
 sudo cp glances-web.service /etc/systemd/system/
 sudo cp glances-dashboard.service /etc/systemd/system/
 
-# Recarregar e iniciar
+# Reload and start
 sudo systemctl daemon-reload
 sudo systemctl enable glances-web glances-dashboard
 sudo systemctl start glances-web glances-dashboard
 ```
 
-### 5. Verificar
+### 5. Verify
 
 ```bash
 sudo systemctl status glances-dashboard
@@ -91,17 +92,17 @@ sudo systemctl status glances-dashboard
 
 ---
 
-## Instalar Glances nos Clientes
+## Installing Glances on Clients
 
-Para monitorar máquinas remotas, o Glances precisa estar rodando nelas com a API web habilitada.
+To monitor remote machines, Glances must be running on them with the web API enabled.
 
 ### Linux (Ubuntu/Debian)
 
 ```bash
-# Instalar Glances
+# Install Glances
 pip3 install glances[web]
 
-# Criar serviço systemd
+# Create systemd service
 sudo tee /etc/systemd/system/glances-web.service > /dev/null <<EOF
 [Unit]
 Description=Glances Web Interface
@@ -118,7 +119,7 @@ Environment=GLANCES_BIND=0.0.0.0
 WantedBy=multi-user.target
 EOF
 
-# Iniciar
+# Start
 sudo systemctl daemon-reload
 sudo systemctl enable glances-web
 sudo systemctl start glances-web
@@ -129,17 +130,17 @@ sudo systemctl start glances-web
 ```bash
 pip3 install glances[web]
 
-# Seguir o mesmo passo de serviço systemd do Ubuntu
+# Follow the same systemd service steps as Ubuntu
 ```
 
 ### Windows
 
 ```powershell
-# Instalar Python e Glances
+# Install Python and Glances
 winget install Python.Python.3.12
 pip install glances[web]
 
-# Criar serviço
+# Create service
 sc.exe create GlancesWeb binPath= "python -m glances -w" start= auto
 sc.exe start GlancesWeb
 ```
@@ -154,7 +155,7 @@ docker run -d --name glances -p 61208:61208 -v /var/run/docker.sock:/var/run/doc
 
 ## Firewall
 
-A porta **8099** (Dashboard) e **61208** (Glances) precisam estar abertas.
+Ports **8099** (Dashboard) and **61208** (Glances) must be open.
 
 ### UFW (Ubuntu)
 
@@ -181,49 +182,49 @@ netsh advfirewall firewall add rule name="Glances Web" dir=in action=allow proto
 
 ---
 
-## Configuração
+## Configuration
 
-### Variáveis de Ambiente
+### Environment Variables
 
-| Variável | Padrão | Descrição |
-|----------|--------|-----------|
-| `GLANCES_DASH_SECRET` | `glances-dashboard-secret-key-change-in-production` | Chave JWT (MUDE em produção!) |
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `GLANCES_DASH_SECRET` | `glances-dashboard-secret-key-change-in-production` | JWT secret key (**change in production!**) |
 
-### Arquivo `config.py`
+### `config.py`
 
 ```python
-SECRET_KEY = os.getenv("GLANCES_DASH_SECRET", "sua-chave-aqui")
-ACCESS_TOKEN_EXPIRE_MINUTES = 480  # 8 horas
+SECRET_KEY = os.getenv("GLANCES_DASH_SECRET", "your-secret-here")
+ACCESS_TOKEN_EXPIRE_MINUTES = 480  # 8 hours
 GLANCES_DEFAULT_PORT = 61208
 ```
 
 ---
 
-## Estrutura do Projeto
+## Project Structure
 
 ```
 dashboard-glances/
 ├── app/
-│   ├── main.py              # FastAPI app + rotas
-│   ├── database.py           # Modelos SQLAlchemy
+│   ├── main.py              # FastAPI app + routes
+│   ├── database.py           # SQLAlchemy models
 │   ├── auth.py               # JWT + bcrypt
-│   ├── i18n/                 # Internacionalização
+│   ├── i18n/                 # Internationalization
 │   │   ├── pt.json
 │   │   └── en.json
 │   ├── routers/
-│   │   ├── auth.py           # Login, registro, senha
-│   │   ├── machines.py       # CRUD máquinas
-│   │   ├── dashboard.py      # Layouts + dados
+│   │   ├── auth.py           # Login, register, password
+│   │   ├── machines.py       # Machine CRUD
+│   │   ├── dashboard.py      # Layouts + data
 │   │   ├── backup.py         # Backup/restore
-│   │   ├── monitor.py        # Monitoramento + logs
-│   │   ├── system.py         # Config do sistema
-│   │   ├── logo.py           # Upload de logo
-│   │   └── alerts.py         # Alertas SMTP/Telegram
+│   │   ├── monitor.py        # Monitoring + logs
+│   │   ├── system.py         # System config
+│   │   ├── logo.py           # Logo upload
+│   │   └── alerts.py         # SMTP/Telegram alerts
 │   ├── services/
-│   │   ├── glances.py        # Cliente HTTP Glances
-│   │   ├── monitor.py        # Scheduler de coleta
-│   │   └── backup.py         # Lógica de backup
-│   └── templates/            # Templates Jinja2
+│   │   ├── glances.py        # Glances HTTP client
+│   │   ├── monitor.py        # Collection scheduler
+│   │   └── backup.py         # Backup logic
+│   └── templates/            # Jinja2 templates
 │       ├── dashboard.html
 │       ├── login.html
 │       ├── settings.html
@@ -231,7 +232,7 @@ dashboard-glances/
 │       ├── admin_setup.html
 │       ├── admin_alerts.html
 │       ├── profile.html
-│       └── email/            # Templates de email
+│       └── email/            # Email templates
 ├── static/
 │   ├── css/style.css
 │   ├── js/
@@ -249,61 +250,61 @@ dashboard-glances/
 
 ---
 
-## Endpoints da API
+## API Endpoints
 
-| Método | Rota | Descrição |
-|--------|------|-----------|
+| Method | Route | Description |
+|--------|-------|-------------|
 | POST | `/api/auth/login` | Login |
-| POST | `/api/auth/register` | Registrar usuário (admin) |
-| GET | `/api/machines/` | Listar máquinas |
-| POST | `/api/machines/` | Adicionar máquina |
-| GET | `/api/dashboard/all-data` | Dados de todas máquinas |
-| GET | `/api/monitor/config` | Config de monitoramento |
-| PUT | `/api/monitor/config` | Atualizar config |
-| GET | `/api/monitor/logs` | Logs de monitoramento |
-| POST | `/api/backup/create` | Criar backup |
-| GET | `/api/backup/list` | Listar backups |
+| POST | `/api/auth/register` | Register user (admin) |
+| GET | `/api/machines/` | List machines |
+| POST | `/api/machines/` | Add machine |
+| GET | `/api/dashboard/all-data` | All machines data |
+| GET | `/api/monitor/config` | Monitor config |
+| PUT | `/api/monitor/config` | Update config |
+| GET | `/api/monitor/logs` | Monitor logs |
+| POST | `/api/backup/create` | Create backup |
+| GET | `/api/backup/list` | List backups |
 | GET | `/api/backup/download?name=...` | Download backup (ZIP) |
-| POST | `/api/backup/restore` | Restaurar backup |
+| POST | `/api/backup/restore` | Restore backup |
 
 ---
 
-## Gerenciamento
+## Management
 
 ```bash
 # Status
 sudo systemctl status glances-dashboard
 
-# Reiniciar
+# Restart
 sudo systemctl restart glances-dashboard
 
-# Logs em tempo real
+# Real-time logs
 sudo journalctl -u glances-dashboard -f
 
-# Parar
+# Stop
 sudo systemctl stop glances-dashboard
 ```
 
 ---
 
-## Licença
+## License
 
-MIT License - veja [LICENSE](LICENSE) para detalhes.
-
----
-
-## Contribuindo
-
-1. Fork o projeto
-2. Crie uma branch (`git checkout -b feature/nova-feature`)
-3. Commit suas mudanças (`git commit -m 'Adiciona nova feature'`)
-4. Push para a branch (`git push origin feature/nova-feature`)
-5. Abra um Pull Request
+MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
-## Créditos
+## Contributing
 
-- [Glances](https://nicolargo.github.io/glances/) — Monitor de sistema
-- [FastAPI](https://fastapi.tiangolo.com/) — Framework web
+1. Fork the project
+2. Create a branch (`git checkout -b feature/new-feature`)
+3. Commit your changes (`git commit -m 'Add new feature'`)
+4. Push to the branch (`git push origin feature/new-feature`)
+5. Open a Pull Request
+
+---
+
+## Credits
+
+- [Glances](https://nicolargo.github.io/glances/) — System monitoring tool
+- [FastAPI](https://fastapi.tiangolo.com/) — Web framework
 - [SQLAlchemy](https://www.sqlalchemy.org/) — ORM
