@@ -56,7 +56,7 @@ def startup():
     init_db()
     db = SessionLocal()
     if not db.query(User).first():
-        admin = User(username="admin", hashed_password=hash_password("admin"), full_name="Administrador")
+        admin = User(username="admin", hashed_password=hash_password("admin"), full_name="Administrador", role="admin")
         db.add(admin)
         db.commit()
     db.close()

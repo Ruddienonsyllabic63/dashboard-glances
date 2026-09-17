@@ -20,34 +20,18 @@ fi
 PY_VERSION=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
 echo -e "Python: ${YELLOW}$PY_VERSION${NC}"
 
-# Verificar/instalar glances
+# Verificar/instalar glances com web support
 GLANCES_BIN=""
-if command -v glances &> /dev/null; then
-    # Verificar se tem fastapi (glances[web])
-    if python3 -c "import fastapi" 2>/dev/null; then
-        GLANCES_BIN=$(command -v glances)
-        echo -e "Glances: ${GREEN}found at $GLANCES_BIN (with web)${NC}"
-    else
-        echo -e "${YELLOW}Reinstalling Glances with web support...${NC}"
-        pip3 install --break-system-packages --force-reinstall "glances[web]" 2>/dev/null || true
-        GLANCES_BIN=$(command -v glances)
-    fi
-fi
+echo -e "${YELLOW}Checking Glances...${NC}"
 
-if [ -z "$GLANCES_BIN" ] || [ ! -f "$GLANCES_BIN" ]; then
-    echo -e "${YELLOW}Installing Glances with web support...${NC}"
-    pip3 install --break-system-packages "glances[web]" 2>/dev/null && {
-        GLANCES_BIN=$(command -v glances)
-    } || true
-fi
-
-if [ -z "$GLANCES_BIN" ] || [ ! -f "$GLANCES_BIN" ]; then
-    echo -e "${YELLOW}Creating venv for Glances...${NC}"
+# Sempre instalar/reinstalar glances[web] para garantir FastAPI
+pip3 install --break-system-packages --force-reinstall "glances[web]" 2>/dev/null || {
+    echo -e "${YELLOW}pip failed, using venv for Glances...${NC}"
     python3 -m venv /opt/glances-venv
     /opt/glances-venv/bin/pip install "glances[web]"
-    GLANCES_BIN="/opt/glances-venv/bin/glances"
-fi
+}
 
+GLANCES_BIN=$(command -v glances 2>/dev/null || echo "/opt/glances-venv/bin/glances")
 echo -e "Glances: ${GREEN}$GLANCES_BIN${NC}"
 
 echo ""
