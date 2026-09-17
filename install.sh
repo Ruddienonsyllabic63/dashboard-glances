@@ -6,44 +6,60 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-echo -e "${GREEN}=== Glances Dashboard - Instalação ===${NC}"
+echo -e "${GREEN}=== Glances Dashboard - Installation ===${NC}"
 echo ""
 
 # Verificar Python
 if ! command -v python3 &> /dev/null; then
-    echo -e "${RED}❌ Python3 não encontrado. Instale: sudo apt install python3 python3-pip${NC}"
+    echo -e "${RED}Python3 not found. Install: sudo apt install python3 python3-pip python3-venv${NC}"
     exit 1
 fi
 
 PY_VERSION=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
 echo -e "Python: ${YELLOW}$PY_VERSION${NC}"
 
-# Verificar Glances
+# Verificar/instalar glances
 if ! command -v glances &> /dev/null; then
-    echo -e "${YELLOW}⚠ Glances não encontrado. Instale:${NC}"
-    echo "  pip3 install glances"
-    echo "  ou: sudo apt install glances"
-    echo ""
+    echo -e "${YELLOW}Installing Glances...${NC}"
+    pip3 install --break-system-packages glances 2>/dev/null || {
+        echo -e "${YELLOW}Creating venv for Glances...${NC}"
+        python3 -m venv /opt/glances-venv
+        /opt/glances-venv/bin/pip install glances
+        # Criar wrapper
+        sudo tee /usr/local/bin/glances-wrapper > /dev/null <<'WRAPPER'
+#!/bin/bash
+/opt/glances-venv/bin/glances "$@"
+WRAPPER
+        sudo chmod +x /usr/local/bin/glances-wrapper
+        echo -e "${YELLOW}Glances installed in /opt/glances-venv${NC}"
+    }
 fi
 
 echo ""
-echo -e "${GREEN}[1/6]${NC} Instalando dependências Python..."
-pip3 install -r requirements.txt --quiet
+echo -e "${GREEN}[1/6]${NC} Creating virtual environment..."
+VENV_DIR="/var/www/dashboard-glances/venv"
+python3 -m venv "$VENV_DIR"
+source "$VENV_DIR/bin/activate"
 
-echo -e "${GREEN}[2/6]${NC} Inicializando banco de dados..."
+echo -e "${GREEN}[2/6]${NC} Installing Python dependencies..."
+pip install -r requirements.txt --quiet
+
+echo -e "${GREEN}[3/6]${NC} Initializing database..."
 python3 -c "from app.database import init_db; init_db()"
 
-echo -e "${GREEN}[3/6]${NC} Configurando serviços systemd..."
+echo -e "${GREEN}[4/6]${NC} Configuring systemd services..."
+# Atualizar path do ExecStart no service do dashboard
+sed -i "s|ExecStart=.*|ExecStart=$VENV_DIR/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8099 --reload|" glances-dashboard.service
 sudo cp glances-web.service /etc/systemd/system/
 sudo cp glances-dashboard.service /etc/systemd/system/
 sudo systemctl daemon-reload
 
-echo -e "${GREEN}[4/6]${NC} Habilitando e iniciando serviços..."
+echo -e "${GREEN}[5/6]${NC} Enabling and starting services..."
 sudo systemctl enable glances-web.service glances-dashboard.service 2>/dev/null
 sudo systemctl restart glances-web.service
 sudo systemctl restart glances-dashboard.service
 
-echo -e "${GREEN}[5/6]${NC} Verificando status..."
+echo -e "${GREEN}[6/6]${NC} Checking status..."
 sleep 2
 
 GLANCES_STATUS=$(systemctl is-active glances-web.service 2>/dev/null || echo "inactive")
@@ -66,12 +82,12 @@ fi
 IP=$(hostname -I 2>/dev/null | awk '{print $1}')
 [ -z "$IP" ] && IP="localhost"
 
-echo -e "${GREEN}[6/6]${NC} Instalação concluída!"
+echo -e "${GREEN}[6/6]${NC} Installation complete!"
 echo ""
-echo -e "  Acesse: ${YELLOW}http://$IP:8099${NC}"
-echo -e "  Login:  ${YELLOW}admin / admin${NC}"
+echo -e "  Access:  ${YELLOW}http://$IP:8099${NC}"
+echo -e "  Login:   ${YELLOW}admin / admin${NC}"
 echo ""
-echo "  Gerenciamento:"
+echo "  Management:"
 echo "    sudo systemctl status glances-dashboard"
 echo "    sudo systemctl restart glances-dashboard"
 echo "    sudo journalctl -u glances-dashboard -f"
