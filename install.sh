@@ -21,19 +21,23 @@ PY_VERSION=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.versi
 echo -e "Python: ${YELLOW}$PY_VERSION${NC}"
 
 # Verificar/instalar glances
-if ! command -v glances &> /dev/null; then
+GLANCES_BIN=""
+if command -v glances &> /dev/null; then
+    GLANCES_BIN=$(command -v glances)
+    echo -e "Glances: ${GREEN}found at $GLANCES_BIN${NC}"
+else
     echo -e "${YELLOW}Installing Glances...${NC}"
-    pip3 install --break-system-packages glances 2>/dev/null || {
+    pip3 install --break-system-packages glances 2>/dev/null && {
+        GLANCES_BIN=$(python3 -c "import shutil; print(shutil.which('glances'))" 2>/dev/null || echo "")
+    } || true
+
+    if [ -z "$GLANCES_BIN" ] || [ ! -f "$GLANCES_BIN" ]; then
         echo -e "${YELLOW}Creating venv for Glances...${NC}"
         python3 -m venv /opt/glances-venv
         /opt/glances-venv/bin/pip install glances
-        sudo tee /usr/local/bin/glances-wrapper > /dev/null <<'WRAPPER'
-#!/bin/bash
-/opt/glances-venv/bin/glances "$@"
-WRAPPER
-        sudo chmod +x /usr/local/bin/glances-wrapper
-        echo -e "${YELLOW}Glances installed in /opt/glances-venv${NC}"
-    }
+        GLANCES_BIN="/opt/glances-venv/bin/glances"
+        echo -e "Glances: ${GREEN}installed at $GLANCES_BIN${NC}"
+    fi
 fi
 
 echo ""
@@ -50,7 +54,7 @@ python3 -c "from app.database import init_db; init_db()"
 
 echo -e "${GREEN}[4/6]${NC} Configuring systemd services..."
 
-# Atualizar WorkingDirectory e ExecStart no service
+# Dashboard service
 cat > /tmp/glances-dashboard.service <<EOF
 [Unit]
 Description=Glances Dashboard
@@ -69,8 +73,25 @@ Environment=GLANCES_DASH_SECRET=glances-dashboard-secret-change-me
 WantedBy=multi-user.target
 EOF
 
+# Glances Web service
+cat > /tmp/glances-web.service <<EOF
+[Unit]
+Description=Glances Web Interface
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=$GLANCES_BIN -w
+Restart=always
+RestartSec=5
+Environment=GLANCES_BIND=0.0.0.0
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
 sudo cp /tmp/glances-dashboard.service /etc/systemd/system/
-sudo cp "$SCRIPT_DIR/glances-web.service" /etc/systemd/system/
+sudo cp /tmp/glances-web.service /etc/systemd/system/
 sudo systemctl daemon-reload
 
 echo -e "${GREEN}[5/6]${NC} Enabling and starting services..."
@@ -89,12 +110,14 @@ if [ "$GLANCES_STATUS" = "active" ]; then
     echo -e "  Glances Web:  ${GREEN}✓ $GLANCES_STATUS${NC}"
 else
     echo -e "  Glances Web:  ${RED}✗ $GLANCES_STATUS${NC}"
+    echo -e "  ${YELLOW}Logs: sudo journalctl -u glances-web -n 20${NC}"
 fi
 
 if [ "$DASHBOARD_STATUS" = "active" ]; then
     echo -e "  Dashboard:    ${GREEN}✓ $DASHBOARD_STATUS${NC}"
 else
     echo -e "  Dashboard:    ${RED}✗ $DASHBOARD_STATUS${NC}"
+    echo -e "  ${YELLOW}Logs: sudo journalctl -u glances-dashboard -n 20${NC}"
 fi
 
 # Detectar IP
