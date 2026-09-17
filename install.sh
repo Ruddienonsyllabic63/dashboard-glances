@@ -27,7 +27,7 @@ if command -v glances &> /dev/null; then
     echo -e "Glances: ${GREEN}found at $GLANCES_BIN${NC}"
 else
     echo -e "${YELLOW}Installing Glances...${NC}"
-    pip3 install --break-system-packages glances 2>/dev/null && {
+    pip3 install --break-system-packages "glances[web]" 2>/dev/null && {
         GLANCES_BIN=$(python3 -c "import shutil; print(shutil.which('glances'))" 2>/dev/null || echo "")
     } || true
 
