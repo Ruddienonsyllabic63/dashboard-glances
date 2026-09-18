@@ -183,6 +183,12 @@ netsh advfirewall firewall add rule name="Glances Web" dir=in action=allow proto
 
 ---
 
+## Dashboard Preview
+
+![Dashboard](screenshots/dashboard.png)
+
+---
+
 ## Configuration
 
 ### Environment Variables
