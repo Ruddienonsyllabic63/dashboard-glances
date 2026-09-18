@@ -19,7 +19,7 @@
     <h3>📧 Configuração de E-mail (SMTP)</h3>
     <p class="section-desc">Configure o servidor SMTP para envio de alertas e recuperação de senha.</p>
     <div class="config-grid">
-      <label><input type="checkbox" id="smtpEnabled"> Ativar envio de e-mail</label>
+      <label class="toggle"><input type="checkbox" id="smtpEnabled"><span class="toggle-track"></span><span class="toggle-label">Ativar envio de e-mail</span></label>
       <label>Host SMTP:
         <input type="text" id="smtpHost" value="{{ config.get('smtp_host', 'smtp.gmail.com') }}" style="width:200px">
       </label>
@@ -35,7 +35,7 @@
       <label>E-mail remetente:
         <input type="email" id="smtpFrom" value="{{ config.get('smtp_from', '') }}" placeholder="noreply@seudominio.com" style="width:250px">
       </label>
-      <label><input type="checkbox" id="smtpUseTls" {{ 'checked' if config.get('smtp_use_tls', 'true') == 'true' }}> Usar TLS</label>
+      <label class="toggle"><input type="checkbox" id="smtpUseTls" {{ 'checked' if config.get('smtp_use_tls', 'true') == 'true' }}><span class="toggle-track"></span><span class="toggle-label">Usar TLS</span></label>
     </div>
     <div style="margin-top:1rem;display:flex;gap:0.75rem;align-items:center">
       <button class="btn-primary" onclick="saveSmtp()" style="width:auto;padding:0.5rem 1.2rem">Salvar SMTP</button>
@@ -69,7 +69,7 @@
     </div>
 
     <div class="config-grid">
-      <label><input type="checkbox" id="tgEnabled"> Ativar alertas Telegram</label>
+      <label class="toggle"><input type="checkbox" id="tgEnabled"><span class="toggle-track"></span><span class="toggle-label">Ativar alertas Telegram</span></label>
       <label>Token do Bot:
         <input type="text" id="tgToken" value="{{ config.get('telegram_bot_token', '') }}" placeholder="123456:ABC-DEF..." style="width:350px">
       </label>

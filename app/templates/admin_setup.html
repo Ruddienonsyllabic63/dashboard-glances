@@ -1,39 +1,39 @@
 {% extends "base.html" %}
-{% block title %}Instalação de Clientes - Admin{% endblock %}
+{% block title %}{{ translations.setup.title }} - Admin{% endblock %}
 {% block body %}
 <nav class="topbar">
   <div class="topbar-left">
     <a href="/" class="btn-icon">←</a>
-    <h2>Instalação de Clientes</h2>
+    <h2>{{ translations.setup.title }}</h2>
     <span class="user-role-badge admin">admin</span>
   </div>
   <div class="topbar-right">
     <span class="user-badge">{{ user.username }}</span>
-    <a href="/settings" class="btn-icon" title="Configurações">⚙</a>
-    <a href="/logout" class="btn-icon" title="Sair">⏻</a>
+    <a href="/settings" class="btn-icon" title="{{ translations.sidebar.settings }}">⚙</a>
+    <a href="/logout" class="btn-icon" title="{{ translations.sidebar.logout }}">⏻</a>
   </div>
 </nav>
 
 <main class="main-content settings-page">
   <div class="settings-section">
-    <h3>1. IP do Servidor</h3>
-    <p class="section-desc">Configure o IP público deste servidor para exibir nas instruções de firewall abaixo.</p>
+    <h3>1. {{ translations.setup.step1_title }}</h3>
+    <p class="section-desc">{{ translations.setup.step1_desc }}</p>
     <div class="setup-inline">
-      <label>IP do Servidor:
-        <input type="text" id="serverIp" value="{{ config.get('server_ip', '') }}" placeholder="Ex: 203.0.113.50" style="width:200px">
+      <label>{{ translations.setup.step1_label }}
+        <input type="text" id="serverIp" value="{{ config.get('server_ip', '') }}" placeholder="{{ translations.setup.step1_placeholder }}" style="width:200px">
       </label>
-      <button class="btn-primary" onclick="saveServerIp()" style="width:auto;padding:0.5rem 1rem">Salvar</button>
+      <button class="btn-primary" onclick="saveServerIp()" style="width:auto;padding:0.5rem 1rem">{{ translations.common.save }}</button>
       <span id="ipResult" style="font-size:0.82rem"></span>
     </div>
   </div>
 
   <div class="settings-section">
-    <h3>2. Instalar Glances no Cliente</h3>
-    <p class="section-desc">Instale o Glances com suporte a API web (necessário para o dashboard).</p>
+    <h3>2. {{ translations.setup.step2_title }}</h3>
+    <p class="section-desc">{{ translations.setup.step2_desc }}</p>
 
     <div class="setup-block">
-      <h4>Docker (Recomendado - mais simples)</h4>
-      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copiar</button><code># Instalar Docker (se não tiver)
+      <h4>{{ translations.setup.docker_recommended }}</h4>
+      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations.setup.copy }}</button><code># Instalar Docker (se não tiver)
 sudo apt install -y docker.io
 sudo systemctl start docker
 sudo usermod -aG docker $USER
@@ -55,8 +55,8 @@ curl -s http://localhost:61208/api/4/version</code></div>
     </div>
 
     <div class="setup-block">
-      <h4>Ubuntu 24.04+ (virtualenv)</h4>
-      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copiar</button><code># Instalar dependências
+      <h4>{{ translations.setup.ubuntu_24 }}</h4>
+      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations.setup.copy }}</button><code># Instalar dependências
 sudo apt update
 sudo apt install -y python3-venv python3-pip
 
@@ -97,8 +97,8 @@ curl -s http://localhost:61208/api/4/version</code></div>
     </div>
 
     <div class="setup-block">
-      <h4>Ubuntu 22.04 / Debian (virtualenv)</h4>
-      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copiar</button><code># Instalar dependências
+      <h4>{{ translations.setup.ubuntu_22 }}</h4>
+      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations.setup.copy }}</button><code># Instalar dependências
 sudo apt update
 sudo apt install -y python3-venv python3-pip
 
@@ -139,8 +139,8 @@ curl -s http://localhost:61208/api/4/version</code></div>
     </div>
 
     <div class="setup-block">
-      <h4>CentOS / RHEL / Rocky</h4>
-      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copiar</button><code>sudo yum install -y python3-pip python3-virtualenv
+      <h4>{{ translations.setup.centos }}</h4>
+      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations.setup.copy }}</button><code>sudo yum install -y python3-pip python3-virtualenv
 
 # Criar ambiente virtual
 sudo mkdir -p /opt/glances
@@ -171,8 +171,8 @@ sudo systemctl start glances-web</code></div>
     </div>
 
     <div class="setup-block">
-      <h4>Windows (via Winget)</h4>
-      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copiar</button><code># Abrir PowerShell como ADMINISTRADOR
+      <h4>{{ translations.setup.windows }}</h4>
+      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations.setup.copy }}</button><code># Abrir PowerShell como ADMINISTRADOR
 # Passo 1: Instalar Python via Winget
 winget install Python.Python.3.12
 
@@ -203,12 +203,12 @@ netsh advfirewall firewall add rule name="Glances Web" protocol=TCP dir=in local
   </div>
 
   <div class="settings-section">
-    <h3>3. Configurar Firewall</h3>
-    <p class="section-desc">Libere a porta 61208 no firewall do cliente para que o servidor possa acessar.</p>
+    <h3>3. {{ translations.setup.step3_title }}</h3>
+    <p class="section-desc">{{ translations.setup.step3_desc }}</p>
 
     <div class="setup-block">
-      <h4>UFW (Ubuntu/Debian)</h4>
-      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copiar</button><code># Liberar apenas para o IP do servidor
+      <h4>{{ translations.setup.ufw }}</h4>
+      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations.setup.copy }}</button><code># Liberar apenas para o IP do servidor
 sudo ufw allow from {{ config.get('server_ip', 'IP_DO_SERVIDOR') }} to any port 61208
 
 # Ou liberar para qualquer IP (menos seguro)
@@ -217,8 +217,8 @@ sudo ufw reload</code></div>
     </div>
 
     <div class="setup-block">
-      <h4>firewalld (CentOS/RHEL)</h4>
-      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copiar</button><code>sudo firewall-cmd --permanent --add-rich-rule='
+      <h4>{{ translations.setup.firewalld }}</h4>
+      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations.setup.copy }}</button><code>sudo firewall-cmd --permanent --add-rich-rule='
   rule family="ipv4"
   source address="{{ config.get('server_ip', 'IP_DO_SERVIDOR') }}"
   port protocol="tcp" port="61208"
@@ -227,16 +227,16 @@ sudo firewall-cmd --reload</code></div>
     </div>
 
     <div class="setup-block">
-      <h4>iptables</h4>
-      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copiar</button><code>sudo iptables -A INPUT -p tcp -s {{ config.get('server_ip', 'IP_DO_SERVIDOR') }} --dport 61208 -j ACCEPT
+      <h4>{{ translations.setup.iptables }}</h4>
+      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations.setup.copy }}</button><code>sudo iptables -A INPUT -p tcp -s {{ config.get('server_ip', 'IP_DO_SERVIDOR') }} --dport 61208 -j ACCEPT
 sudo iptables-save | sudo tee /etc/iptables/rules.v4</code></div>
     </div>
   </div>
 
   <div class="settings-section">
-    <h3>4. Testar Conexão</h3>
-    <p class="section-desc">Verifique se o Glances está respondendo no cliente.</p>
-    <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copiar</button><code># Testar a API do Glances
+    <h3>4. {{ translations.setup.step4_title }}</h3>
+    <p class="section-desc">{{ translations.setup.step4_desc }}</p>
+    <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations.setup.copy }}</button><code># Testar a API do Glances
 curl -s http://IP_DO_CLIENTE:61208/api/4/version
 
 # Deve retornar algo como: "4.5.6"
@@ -245,12 +245,12 @@ curl -s http://IP_DO_CLIENTE:61208/api/4/version
 curl -s http://IP_DO_CLIENTE:61208/api/4/system</code></div>
 
     <div class="setup-block" style="margin-top:1rem">
-      <h4>Adicionar no Dashboard</h4>
-      <p>Vá em <a href="/settings">Configurações → Máquinas</a> e adicione:</p>
+      <h4>{{ translations.setup.add_to_dashboard }}</h4>
+      <p>{{ translations.setup.add_to_dashboard_desc }} <a href="/settings">{{ translations.setup.add_to_dashboard_link }}</a> {{ translations.setup.add_to_dashboard_end }}</p>
       <ul class="setup-list">
-        <li><strong>Nome:</strong> Nome amigável da máquina</li>
-        <li><strong>Host:</strong> IP ou hostname do cliente</li>
-        <li><strong>Porta:</strong> 61208 (padrão)</li>
+        <li><strong>{{ translations.setup.name_label }}</strong> {{ translations.setup.name_desc }}</li>
+        <li><strong>{{ translations.setup.host_label }}</strong> {{ translations.setup.host_desc }}</li>
+        <li><strong>{{ translations.setup.port_label }}</strong> {{ translations.setup.port_desc }}</li>
       </ul>
     </div>
   </div>
@@ -290,10 +290,10 @@ function fallbackCopy(btn, text) {
 }
 
 function showCopied(btn) {
-  btn.textContent = 'Copiado!';
+  btn.textContent = '{{ translations.setup.copied }}';
   btn.classList.add('copied');
   setTimeout(function() {
-    btn.textContent = 'Copiar';
+    btn.textContent = '{{ translations.setup.copy }}';
     btn.classList.remove('copied');
   }, 2000);
 }
@@ -307,7 +307,7 @@ function saveServerIp() {
     body: JSON.stringify({configs: {server_ip: ip}})
   }).then(function(r){return r.json()}).then(function(d){
     result.style.color = 'var(--green)';
-    result.textContent = d.message || 'Salvo';
+    result.textContent = d.message || '{{ translations.common.save }}';
   });
 }
 

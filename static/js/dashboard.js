@@ -7,10 +7,58 @@ var checkedProcs = {};
 var checkedMachines = {};
 var currentLayoutId = 'default';
 var layoutsData = [];
+var pagesData = [];
+var currentPageId = 'all';
+var allMachinesList = [];
+
+// ============================================================
+// ICONS
+// ============================================================
+var POPULAR_ICONS = [
+  'mdi:server', 'mdi:desktop-tower', 'mdi:laptop', 'mdi:router-wireless',
+  'mdi:nas', 'mdi:cloud', 'mdi:network', 'mdi:database',
+  'mdi:harddisk', 'mdi:monitor', 'mdi:television', 'mdi:cellphone',
+  'mdi:printer', 'mdi:camera', 'mdi:cctv', 'mdi:shield-home',
+  'mdi:home', 'mdi:factory', 'mdi:domain', 'mdi:office-building',
+  'mdi:server-network', 'mdi:access-point-network', 'mdi:lan',
+  'mdi:web', 'mdi:radio-tower', 'mdi:access-point', 'mdi:switch',
+  'mdi:docker', 'mdi:container', 'mdi:cube', 'mdi:hexagon',
+  'mdi:router-network', 'mdi:ethernet', 'mdi:cable-routing',
+  'mdi:harddisk-variant', 'mdi:solid', 'mdi:server-minus',
+  'mdi:server-plus', 'mdi:server-security', 'mdi:server-off',
+  'mdi:raspberry-pi', 'mdi:chip', 'mdi:microchip', 'mdi:memory',
+  'mdi:thermometer', 'mdi:fan', 'mdi:car-battery', 'mdi:battery',
+  'mdi:power-plug', 'mdi:lightning-bolt', 'mdi:flash',
+  'mdi:weather-sunny', 'mdi:thermometer-lines',
+  'mdi:video', 'mdi:music', 'mdi:filmstrip', 'mdi:gamepad-variant',
+  'mdi:robot', 'mdi:brain', 'mdi:cpu-64-bit', 'mdi:chip',
+  'mdi:fire', 'mdi:water', 'mdi:leaf', 'mdi:flower',
+  'mdi:star', 'mdi:heart', 'mdi:trophy', 'mdi:medal',
+  'mdi:lock', 'mdi:key', 'mdi:shield-check', 'mdi:shield-alert',
+  'mdi:eye', 'mdi:eye-off', 'mdi:account', 'mdi:account-group',
+  'mdi:wrench', 'mdi:screwdriver', 'mdi:tools', 'mdi:cog',
+  'mdi:cog-transfer', 'mdi:tune', 'mdi:sliders',
+  'mdi:magnify', 'mdi:magnify-plus', 'mdi:magnify-minus',
+  'mdi:bell', 'mdi:bell-ring', 'mdi:bell-off',
+  'mdi:email', 'mdi:phone', 'mdi:message', 'mdi:message-alert',
+  'mdi:chart-line', 'mdi:chart-bar', 'mdi:chart-pie', 'mdi:chart-areaspline',
+  'mdi:speedometer', 'mdi:gauge', 'mdi:dashboard',
+  'mdi:calendar', 'mdi:clock', 'mdi:timer', 'mdi:history',
+  'mdi:map-marker', 'mdi:compass', 'mdi:directions',
+  'mdi:car', 'mdi:bus', 'mdi:train', 'mdi:airplane',
+  'mdi:spotify', 'mdi:youtube', 'mdi:github', 'mdi:reddit',
+];
+
+var MACHINE_COLORS = [
+  '', '#3b82f6', '#22c55e', '#ef4444', '#eab308',
+  '#f97316', '#a855f7', '#06b6d4', '#ec4899', '#14b8a6',
+];
 
 function initDashboard(username) {
   TOKEN = getToken();
   loadLayouts();
+  loadPages();
+  loadAllMachinesList();
   changeTemplate('grid');
   refreshAll();
   refreshInterval = setInterval(refreshAll, 10000);
@@ -37,12 +85,197 @@ function api(method, path, body) {
   return fetch('/api' + path, opts).then(function(r) { return r.json(); });
 }
 
+function loadAllMachinesList() {
+  api('GET', '/machines/').then(function(data) {
+    allMachinesList = data || [];
+  });
+}
+
+// ============================================================
+// PAGES
+// ============================================================
+
+function loadPages() {
+  api('GET', '/dashboard/pages').then(function(data) {
+    pagesData = data || [];
+    renderPageTabs();
+  });
+}
+
+function renderPageTabs() {
+  var container = document.getElementById('pageTabs');
+  if (!container) return;
+  var html = '<button class="page-tab' + (currentPageId === 'all' ? ' active' : '') + '" data-page-id="all" onclick="selectPage(\'all\')">';
+  html += '<span class="mdi mdi-view-dashboard"></span> ' + t('dashboard.all_pages');
+  html += '</button>';
+  pagesData.forEach(function(p) {
+    var active = currentPageId == p.id ? ' active' : '';
+    html += '<button class="page-tab' + active + '" data-page-id="' + p.id + '" onclick="selectPage(' + p.id + ')">';
+    html += '<span class="mdi ' + (p.icon || 'mdi:view-dashboard') + '"></span> ' + p.name;
+    html += '<span class="page-tab-actions" onclick="event.stopPropagation();deletePage(' + p.id + ')" title="Excluir">&#10005;</span>';
+    html += '</button>';
+  });
+  html += '<button class="page-tab-add" onclick="openPageModal()" title="' + t('dashboard.add_page') + '">+</button>';
+  container.innerHTML = html;
+}
+
+function selectPage(pageId) {
+  currentPageId = pageId;
+  renderPageTabs();
+  refreshAll();
+}
+
+function openPageModal(editId) {
+  var modal = document.getElementById('pageModal');
+  var title = document.getElementById('pageModalTitle');
+  var nameInput = document.getElementById('pageNameInput');
+  var editIdInput = document.getElementById('pageEditId');
+  var iconPreview = document.getElementById('pageIconPreview');
+  var iconName = document.getElementById('pageIconName');
+
+  if (editId) {
+    var page = pagesData.find(function(p) { return p.id === editId; });
+    if (!page) return;
+    title.textContent = t('dashboard.edit_page');
+    editIdInput.value = editId;
+    nameInput.value = page.name;
+    iconPreview.className = 'mdi ' + (page.icon || 'mdi:view-dashboard');
+    iconName.textContent = page.icon || 'mdi:view-dashboard';
+  } else {
+    title.textContent = t('dashboard.create_page');
+    editIdInput.value = '';
+    nameInput.value = '';
+    iconPreview.className = 'mdi mdi:view-dashboard';
+    iconName.textContent = 'mdi:view-dashboard';
+  }
+
+  // Populate machine checkboxes
+  var list = document.getElementById('pageMachinesList');
+  var selectedIds = [];
+  if (editId) {
+    var pg = pagesData.find(function(p) { return p.id === editId; });
+    if (pg) selectedIds = pg.machine_ids || [];
+  }
+  var html = '';
+  allMachinesList.forEach(function(m) {
+    var chk = selectedIds.indexOf(m.id) !== -1 ? ' checked' : '';
+    html += '<label class="toggle" style="padding:0.3rem 0;font-size:0.85rem">';
+    html += '<input type="checkbox" class="page-machine-cb" value="' + m.id + '"' + chk + '>';
+    html += '<span class="toggle-track"></span>';
+    html += '<span class="toggle-label"><i class="mdi ' + (m.icon || 'mdi:server') + '" style="font-size:1rem"></i> ' + m.name + '</span>';
+    html += '</label>';
+  });
+  list.innerHTML = html || '<p style="color:var(--text-muted);font-size:0.8rem">' + t('dashboard.no_machines') + '</p>';
+
+  modal.style.display = 'flex';
+  nameInput.focus();
+}
+
+function closePageModal(e) {
+  if (!e || e.target === document.getElementById('pageModal')) {
+    document.getElementById('pageModal').style.display = 'none';
+  }
+}
+
+function confirmSavePage() {
+  var editId = document.getElementById('pageEditId').value;
+  var name = document.getElementById('pageNameInput').value.trim();
+  var icon = document.getElementById('pageIconName').textContent;
+  if (!name) return;
+
+  var machineIds = [];
+  document.querySelectorAll('.page-machine-cb:checked').forEach(function(cb) {
+    machineIds.push(parseInt(cb.value));
+  });
+
+  if (editId) {
+    api('PUT', '/dashboard/pages/' + editId, { name: name, icon: icon, machine_ids: machineIds }).then(function(res) {
+      document.getElementById('pageModal').style.display = 'none';
+      if (res.message) loadPages();
+    });
+  } else {
+    api('POST', '/dashboard/pages', { name: name, icon: icon, machine_ids: machineIds }).then(function(res) {
+      document.getElementById('pageModal').style.display = 'none';
+      if (res.id) {
+        loadPages();
+        selectPage(res.id);
+      }
+    });
+  }
+}
+
+function deletePage(pageId) {
+  if (!confirm(t('dashboard.confirm_delete_page'))) return;
+  api('DELETE', '/dashboard/pages/' + pageId).then(function(res) {
+    if (res.message) {
+      if (currentPageId == pageId) selectPage('all');
+      loadPages();
+    }
+  });
+}
+
+// ============================================================
+// ICON PICKER (pages)
+// ============================================================
+
+function togglePageIconPicker() {
+  var dd = document.getElementById('pageIconDropdown');
+  var isOpen = dd.classList.contains('open');
+  dd.classList.toggle('open');
+  if (!isOpen) {
+    renderPageIconGrid('');
+    document.getElementById('pageIconSearch').value = '';
+    document.getElementById('pageIconSearch').focus();
+  }
+}
+
+function renderPageIconGrid(filter) {
+  var grid = document.getElementById('pageIconGrid');
+  var current = document.getElementById('pageIconName').textContent;
+  var icons = POPULAR_ICONS;
+  if (filter) {
+    var q = filter.toLowerCase();
+    icons = icons.filter(function(ic) { return ic.indexOf(q) !== -1; });
+  }
+  var html = '';
+  icons.forEach(function(ic) {
+    var sel = ic === current ? ' selected' : '';
+    html += '<div class="icon-picker-item' + sel + '" data-icon="' + ic + '" onclick="selectPageIcon(\'' + ic + '\')" title="' + ic + '">';
+    html += '<i class="mdi ' + ic + '"></i></div>';
+  });
+  grid.innerHTML = html;
+}
+
+function selectPageIcon(icon) {
+  document.getElementById('pageIconPreview').className = 'mdi ' + icon;
+  document.getElementById('pageIconName').textContent = icon;
+  document.getElementById('pageIconDropdown').classList.remove('open');
+}
+
+function filterPageIcons() {
+  var q = document.getElementById('pageIconSearch').value;
+  renderPageIconGrid(q);
+}
+
+// Close icon picker on outside click
+document.addEventListener('click', function(e) {
+  var wrap = document.querySelector('#pageModal .icon-picker-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('pageIconDropdown').classList.remove('open');
+  }
+});
+
+// ============================================================
+// DATA REFRESH
+// ============================================================
+
 function refreshAll() {
-  console.log('refreshAll chamado');
-  console.log('TOKEN:', TOKEN);
-  api('GET', '/dashboard/all').then(function(data) {
+  var url = '/dashboard/all';
+  if (currentPageId !== 'all') {
+    url += '?page_id=' + currentPageId;
+  }
+  api('GET', url).then(function(data) {
     machinesData = data.machines || [];
-    console.log('Máquinas carregadas:', machinesData.length);
     updateOverview();
     updateMachineFilter();
     initMachinesSection();
@@ -79,7 +312,10 @@ function updateMachineFilter() {
     var mid = m.machine.id;
     if (!(mid in checkedMachines)) checkedMachines[mid] = true;
     var chk = checkedMachines[mid] ? ' checked' : '';
-    html += '<label class="filter-item"><input type="checkbox" class="machine-cb"' + chk + ' onchange="toggleMachine(this)" data-machine="' + mid + '"> ' + m.machine.name + '</label>';
+    var icon = m.machine.icon || 'mdi:server';
+    html += '<label class="toggle"><input type="checkbox" class="machine-cb"' + chk + ' onchange="toggleMachine(this)" data-machine="' + mid + '">';
+    html += '<span class="toggle-track"></span>';
+    html += '<span class="toggle-label"><i class="mdi ' + icon + '" style="font-size:0.9rem"></i> ' + m.machine.name + '</span></label>';
   });
   container.innerHTML = html;
   var countEl = document.getElementById('machineCount');
@@ -257,17 +493,31 @@ function renderMachineCard(m, filters) {
   var disks = m.disk || [];
   var networks = m.network || [];
   var processes = m.processlist || [];
-  var hostname = m.system ? (m.system.hostname || m.machine.name) : m.machine.name;
-  var displayName = m.machine.name + (m.system && m.system.hostname ? ' — ' + m.system.hostname : '');
   var mid = m.machine.id;
   var key = 'm' + mid;
+  var icon = m.machine.icon || 'mdi:server';
+  var color = m.machine.color || '';
 
-  var html = '<div class="machine-card ' + (isOffline ? 'offline' : '') + '">';
-  html += '<div class="card-header"><h4><span class="status-dot ' + (isOffline ? 'offline' : 'online') + '"></span>' + displayName + '</h4>';
+  var cardStyle = '';
+  var headerStyle = '';
+  if (color) {
+    cardStyle = ' style="border-left:3px solid ' + color + '"';
+  }
+
+  var html = '<div class="machine-card' + (isOffline ? ' offline' : '') + '"' + cardStyle + '>';
+  html += '<div class="card-header">';
+  html += '<h4 style="cursor:pointer" onclick="window.location.href=\'/machine/' + mid + '\'">';
+  html += '<i class="mdi ' + icon + '" style="font-size:1.2rem;flex-shrink:0"></i>';
+  html += '<span class="status-dot ' + (isOffline ? 'offline' : 'online') + '"></span>';
+  html += m.machine.name;
+  if (m.system && m.system.hostname && m.system.hostname !== m.machine.name) {
+    html += '<span style="color:var(--text-muted);font-weight:400;font-size:0.8rem"> — ' + m.system.hostname + '</span>';
+  }
+  html += '</h4>';
   html += '<div style="display:flex;align-items:center;gap:0.5rem">';
   html += '<span style="font-size:0.75rem;color:var(--text-muted)">' + m.machine.host + '</span>';
   if (!isOffline && processes.length > 0) {
-    html += '<button class="card-filter-btn" onclick="openFilterModal(' + mid + ')" title="Filtrar processos">⚙ ' + t('machine.filters') + '</button>';
+    html += '<button class="card-filter-btn" onclick="event.stopPropagation();openFilterModal(' + mid + ')" title="Filtrar processos">⚙ ' + t('machine.filters') + '</button>';
   }
   html += '</div></div>';
   html += '<div class="card-body">';
@@ -599,7 +849,6 @@ function openFilterModal(machineId) {
     if (!(p in checkedProcs[key])) checkedProcs[key][p] = true;
   });
 
-  var hostname = m.system ? (m.system.hostname || m.machine.name) : m.machine.name;
   var displayName = m.machine.name + (m.system && m.system.hostname ? ' — ' + m.system.hostname : '');
 
   var modal = document.createElement('div');
@@ -619,9 +868,10 @@ function openFilterModal(machineId) {
   html += '<div class="filter-modal-list" id="user-list">';
   Object.keys(users).sort().forEach(function(u) {
     var chk = checkedUsers[key][u] ? ' checked' : '';
-    html += '<label class="filter-modal-item" data-name="' + u.toLowerCase() + '">';
+    html += '<label class="filter-modal-item toggle" data-name="' + u.toLowerCase() + '">';
     html += '<input type="checkbox"' + chk + ' onchange="modalToggleItem(\'' + key + '\',\'user\',\'' + u.replace(/'/g, "\\'") + '\',this.checked)"> ';
-    html += u + ' <span class="filter-count">(' + users[u] + ')</span></label>';
+    html += '<span class="toggle-track"></span>';
+    html += '<span class="toggle-label">' + u + ' <span class="filter-count">(' + users[u] + ')</span></span></label>';
   });
   html += '</div></div>';
 
@@ -635,9 +885,10 @@ function openFilterModal(machineId) {
   Object.keys(procs).sort().forEach(function(p) {
     var chk = checkedProcs[key][p] ? ' checked' : '';
     var safeName = p.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-    html += '<label class="filter-modal-item" data-name="' + p.toLowerCase() + '">';
+    html += '<label class="filter-modal-item toggle" data-name="' + p.toLowerCase() + '">';
     html += '<input type="checkbox"' + chk + ' onchange="modalToggleItem(\'' + key + '\',\'proc\',\'' + safeName + '\',this.checked)"> ';
-    html += p + ' <span class="filter-count">(' + procs[p] + ')</span></label>';
+    html += '<span class="toggle-track"></span>';
+    html += '<span class="toggle-label">' + p + ' <span class="filter-count">(' + procs[p] + ')</span></span></label>';
   });
   html += '</div></div>';
 

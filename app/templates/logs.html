@@ -16,7 +16,7 @@
   <div class="logs-tabs">
     <button class="tab-btn active" onclick="switchTab('tab-logs')">📊 Logs</button>
     {% if user.role == 'admin' %}
-    <button class="tab-btn" onclick="switchTab('tab-config')">⚙ Configuração</button>
+    <button class="tab-btn" onclick="switchTab('tab-config')">⚙ {{ translations.logs.config }}</button>
     {% endif %}
   </div>
 
@@ -29,7 +29,7 @@
         </select>
         <input type="date" id="logDateFrom" onchange="loadLogs()">
         <input type="date" id="logDateTo" onchange="loadLogs()">
-        <label class="filter-item" style="margin-left:0.5rem"><input type="checkbox" id="logAlertsOnly" onchange="loadLogs()"> Apenas Alertas</label>
+        <label class="toggle" style="margin-left:0.5rem"><input type="checkbox" id="logAlertsOnly" onchange="loadLogs()"><span class="toggle-track"></span><span class="toggle-label">Apenas Alertas</span></label>
         <button class="btn-secondary" onclick="loadLogs()">{{ translations.logs.filters }}</button>
       </div>
       {% if user.role == 'admin' %}
@@ -90,11 +90,11 @@
         <div class="monitor-select-block">
           <div class="filter-subheader">{{ translations.logs.metrics }}</div>
           <div class="monitor-check-list">
-            <label class="filter-item"><input type="checkbox" id="mCPU" checked> CPU %</label>
-            <label class="filter-item"><input type="checkbox" id="mMEM" checked> Memória</label>
-            <label class="filter-item"><input type="checkbox" id="mDISK" checked> Disco</label>
-            <label class="filter-item"><input type="checkbox" id="mLOAD" checked> Load Average</label>
-            <label class="filter-item"><input type="checkbox" id="mPROCS" checked> Top Processos</label>
+            <label class="toggle"><input type="checkbox" id="mCPU" checked><span class="toggle-track"></span><span class="toggle-label">CPU %</span></label>
+            <label class="toggle"><input type="checkbox" id="mMEM" checked><span class="toggle-track"></span><span class="toggle-label">Memória</span></label>
+            <label class="toggle"><input type="checkbox" id="mDISK" checked><span class="toggle-track"></span><span class="toggle-label">Disco</span></label>
+            <label class="toggle"><input type="checkbox" id="mLOAD" checked><span class="toggle-track"></span><span class="toggle-label">Load Average</span></label>
+            <label class="toggle"><input type="checkbox" id="mPROCS" checked><span class="toggle-track"></span><span class="toggle-label">Top Processos</span></label>
           </div>
         </div>
       </div>
@@ -105,59 +105,90 @@
     </div>
 
     <div class="settings-section" style="margin-top:1rem">
-      <h3>{{ translations.logs.config }} do Monitor</h3>
-      <div class="monitor-config-form">
-        <label>Intervalo (minutos):
-          <input type="number" id="monitorInterval" min="1" value="5">
-        </label>
-        <label>Retenção (meses):
-          <input type="number" id="monitorRetention" min="1" value="3">
-        </label>
-        <label>Limite de Processos Total (0=desativado):
-          <input type="number" id="monitorThreshold" min="0" value="0" style="width:80px">
-        </label>
+      <h3>{{ translations.logs.config }} {{ translations.logs.monitor_active }}</h3>
+      <div class="monitor-config-form" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem">
+        <div>
+          <label style="font-size:0.8rem;color:var(--text-muted)">{{ translations.logs.interval }}:</label>
+          <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.3rem">
+            <input type="number" id="monitorInterval" min="1" value="5" style="width:80px;padding:0.3rem;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary)">
+            <span style="font-size:0.8rem;color:var(--text-muted)">min</span>
+          </div>
+        </div>
+        <div>
+          <label style="font-size:0.8rem;color:var(--text-muted)">{{ translations.logs.retention }}:</label>
+          <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.3rem">
+            <input type="number" id="monitorRetention" min="1" value="3" style="width:80px;padding:0.3rem;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary)">
+            <span style="font-size:0.8rem;color:var(--text-muted)">meses</span>
+          </div>
+        </div>
       </div>
     </div>
 
     <div class="settings-section" style="margin-top:1rem">
-      <h3>🚨 Alertas de Threshold</h3>
-      <p style="font-size:0.8rem;color:var(--text-muted)">Configure os limites e quais alertas deseja receber.</p>
-      <div class="monitor-config-form" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem">
-        <div>
-          <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem">
-            <input type="checkbox" id="alertCpu"> <strong>📊 CPU</strong>
+      <h3>🚨 {{ translations.logs.threshold_alerts }}</h3>
+      <p style="font-size:0.8rem;color:var(--text-muted)">{{ translations.logs.threshold_alerts }}</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-top:1rem">
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1rem">
+          <label class="toggle" style="margin-bottom:0.75rem">
+            <input type="checkbox" id="alertCpu"><span class="toggle-track"></span><span class="toggle-label"><strong>📊 {{ translations.logs.cpu_alert }}</strong></span>
           </label>
-          <label>Limite CPU (%):
-            <input type="number" id="cpuThreshold" min="0" max="100" value="90" style="width:80px">
-          </label>
+          <div style="margin-top:0.5rem">
+            <label style="font-size:0.8rem;color:var(--text-muted)">{{ translations.logs.cpu_limit }}:</label>
+            <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.3rem">
+              <input type="number" id="cpuThreshold" min="0" max="100" value="90" style="width:80px;padding:0.3rem;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary)">
+              <span style="font-size:0.8rem;color:var(--text-muted)">%</span>
+            </div>
+          </div>
         </div>
-        <div>
-          <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem">
-            <input type="checkbox" id="alertMem"> <strong>💾 Memória</strong>
+
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1rem">
+          <label class="toggle" style="margin-bottom:0.75rem">
+            <input type="checkbox" id="alertMem"><span class="toggle-track"></span><span class="toggle-label"><strong>💾 {{ translations.logs.mem_alert }}</strong></span>
           </label>
-          <label>Limite Mem (%):
-            <input type="number" id="memThreshold" min="0" max="100" value="90" style="width:80px">
-          </label>
+          <div style="margin-top:0.5rem">
+            <label style="font-size:0.8rem;color:var(--text-muted)">{{ translations.logs.mem_limit }}:</label>
+            <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.3rem">
+              <input type="number" id="memThreshold" min="0" max="100" value="90" style="width:80px;padding:0.3rem;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary)">
+              <span style="font-size:0.8rem;color:var(--text-muted)">%</span>
+            </div>
+          </div>
         </div>
-        <div>
-          <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem">
-            <input type="checkbox" id="alertDisk"> <strong>💿 Disco</strong>
+
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1rem">
+          <label class="toggle" style="margin-bottom:0.75rem">
+            <input type="checkbox" id="alertDisk"><span class="toggle-track"></span><span class="toggle-label"><strong>💿 {{ translations.logs.disk_alert }}</strong></span>
           </label>
-          <label>Limite Disco (%):
-            <input type="number" id="diskThreshold" min="0" max="100" value="90" style="width:80px">
-          </label>
+          <div style="margin-top:0.5rem">
+            <label style="font-size:0.8rem;color:var(--text-muted)">{{ translations.logs.disk_limit }}:</label>
+            <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.3rem">
+              <input type="number" id="diskThreshold" min="0" max="100" value="90" style="width:80px;padding:0.3rem;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary)">
+              <span style="font-size:0.8rem;color:var(--text-muted)">%</span>
+            </div>
+          </div>
         </div>
-        <div>
-          <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem">
-            <input type="checkbox" id="alertProcess"> <strong>📈 Processos</strong>
+
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1rem">
+          <label class="toggle" style="margin-bottom:0.75rem">
+            <input type="checkbox" id="alertProcess"><span class="toggle-track"></span><span class="toggle-label"><strong>📈 {{ translations.logs.process_alert }}</strong></span>
           </label>
-          <label style="font-size:0.75rem;color:var(--text-muted)">Usa limite acima</label>
+          <div style="margin-top:0.5rem">
+            <label style="font-size:0.8rem;color:var(--text-muted)">{{ translations.logs.process_limit }}:</label>
+            <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.3rem">
+              <input type="number" id="monitorThreshold" min="0" value="0" style="width:80px;padding:0.3rem;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary)">
+            </div>
+          </div>
         </div>
-        <div>
-          <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem">
-            <input type="checkbox" id="alertPerUser"> <strong>👤 Por Usuário</strong>
+
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1rem">
+          <label class="toggle" style="margin-bottom:0.75rem">
+            <input type="checkbox" id="alertPerUser"><span class="toggle-track"></span><span class="toggle-label"><strong>👤 {{ translations.logs.user_alert }}</strong></span>
           </label>
-          <label style="font-size:0.75rem;color:var(--text-muted)">Monitora usuários específicos</label>
+          <div style="margin-top:0.5rem">
+            <label style="font-size:0.8rem;color:var(--text-muted)">{{ translations.logs.per_user_limit }}:</label>
+            <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.3rem">
+              <input type="number" id="monitorPerUserThreshold" min="0" value="0" style="width:80px;padding:0.3rem;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary)">
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -165,10 +196,9 @@
     <div class="settings-section" style="margin-top:1rem">
       <h3>{{ translations.logs.per_user_limit }}</h3>
       <p style="font-size:0.8rem;color:var(--text-muted)">Selecione os usuários para monitorar. O alerta dispara quando o usuário selecionado tiver mais processos que o limite.</p>
-      <div class="monitor-config-form">
-        <label>Limite (0=desativado):
-          <input type="number" id="monitorPerUserThreshold" min="0" value="0" style="width:80px">
-        </label>
+      <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.5rem">
+        <label style="font-size:0.8rem;color:var(--text-muted)">{{ translations.logs.per_user_limit }}:</label>
+        <input type="number" id="monitorPerUserThreshold" min="0" value="0" style="width:80px;padding:0.3rem;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary)">
       </div>
       <div style="margin-top:1rem">
         <div class="filter-subheader">{{ translations.logs.selected_users }}</div>
@@ -185,7 +215,7 @@
     </div>
 
     <div class="settings-section" style="margin-top:1rem;display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap">
-      <label><input type="checkbox" id="monitorEnabled" checked> Monitor Ativo</label>
+      <label class="toggle"><input type="checkbox" id="monitorEnabled" checked><span class="toggle-track"></span><span class="toggle-label">Monitor Ativo</span></label>
       <button class="btn-primary" onclick="saveMonitorConfig()" style="width:auto;padding:0.5rem 1.2rem">{{ translations.logs.save_config }}</button>
       <span id="monitorConfigResult" style="font-size:0.85rem"></span>
       <span style="font-size:0.75rem;color:var(--text-muted)">⚠ Lembre-se de salvar após alterar os usuários</span>

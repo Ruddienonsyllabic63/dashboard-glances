@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+import json
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from typing import Optional
-from app.database import get_db, DashboardLayout, Machine
-from app.auth import get_current_user, User
+from typing import Optional, List
+from app.database import get_db, DashboardLayout, DashboardPage, Machine
+from app.auth import get_current_user, require_admin, User
 from app.services.glances import GlancesClient
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
@@ -14,14 +15,49 @@ class LayoutSave(BaseModel):
     config: str
 
 
+class PageCreate(BaseModel):
+    name: str
+    icon: str = "mdi:view-dashboard"
+    machine_ids: List[int] = []
+
+
+class PageUpdate(BaseModel):
+    name: Optional[str] = None
+    icon: Optional[str] = None
+    machine_ids: Optional[List[int]] = None
+    position: Optional[int] = None
+
+
 @router.get("/all")
-def get_all_data(user=Depends(get_current_user), db: Session = Depends(get_db)):
-    machines = db.query(Machine).filter(Machine.enabled == True).all()
+def get_all_data(
+    page_id: Optional[int] = Query(default=None),
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    query = db.query(Machine).filter(Machine.enabled == True)
+
+    if page_id is not None:
+        page = db.query(DashboardPage).filter(DashboardPage.id == page_id).first()
+        if not page:
+            raise HTTPException(status_code=404, detail="Página não encontrada")
+        try:
+            allowed_ids = json.loads(page.machine_ids)
+        except Exception:
+            allowed_ids = []
+        if allowed_ids:
+            query = query.filter(Machine.id.in_(allowed_ids))
+
+    machines = query.all()
     result = []
     for m in machines:
         client = GlancesClient(m.host, m.port)
         data = client.get_all()
-        data["machine"] = {"id": m.id, "name": m.name, "host": m.host}
+        data["machine"] = {
+            "id": m.id, "name": m.name, "host": m.host,
+            "icon": m.icon or "mdi:server",
+            "description": m.description or "",
+            "color": m.color or "",
+        }
         alive = client.is_alive()
         data["status"] = "online" if alive else "offline"
         result.append(data)
@@ -35,7 +71,12 @@ def get_overview(user=Depends(get_current_user), db: Session = Depends(get_db)):
     for m in machines:
         client = GlancesClient(m.host, m.port)
         alive = client.is_alive()
-        info = {"id": m.id, "name": m.name, "host": m.host, "status": "online" if alive else "offline"}
+        info = {
+            "id": m.id, "name": m.name, "host": m.host,
+            "icon": m.icon or "mdi:server",
+            "color": m.color or "",
+            "status": "online" if alive else "offline",
+        }
         if alive:
             overview["online"] += 1
             cpu = client.get_cpu()
@@ -49,6 +90,79 @@ def get_overview(user=Depends(get_current_user), db: Session = Depends(get_db)):
         overview["machines"].append(info)
     return overview
 
+
+# ============================================================
+# PAGES CRUD
+# ============================================================
+
+@router.get("/pages")
+def list_pages(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    pages = (
+        db.query(DashboardPage)
+        .filter(DashboardPage.user_id == user.id)
+        .order_by(DashboardPage.position.asc(), DashboardPage.id.asc())
+        .all()
+    )
+    return [
+        {
+            "id": p.id, "name": p.name, "icon": p.icon,
+            "position": p.position, "machine_ids": json.loads(p.machine_ids or "[]"),
+            "created_at": p.created_at.isoformat() if p.created_at else None,
+        }
+        for p in pages
+    ]
+
+
+@router.post("/pages")
+def create_page(req: PageCreate, user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    max_pos = db.query(DashboardPage).filter(DashboardPage.user_id == user.id).count()
+    page = DashboardPage(
+        user_id=user.id,
+        name=req.name,
+        icon=req.icon,
+        position=max_pos,
+        machine_ids=json.dumps(req.machine_ids),
+    )
+    db.add(page)
+    db.commit()
+    db.refresh(page)
+    return {
+        "id": page.id, "name": page.name, "icon": page.icon,
+        "position": page.position, "machine_ids": req.machine_ids,
+        "message": "Página criada",
+    }
+
+
+@router.put("/pages/{page_id}")
+def update_page(page_id: int, req: PageUpdate, user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    page = db.query(DashboardPage).filter(DashboardPage.id == page_id).first()
+    if not page:
+        raise HTTPException(status_code=404, detail="Página não encontrada")
+    if req.name is not None:
+        page.name = req.name
+    if req.icon is not None:
+        page.icon = req.icon
+    if req.machine_ids is not None:
+        page.machine_ids = json.dumps(req.machine_ids)
+    if req.position is not None:
+        page.position = req.position
+    db.commit()
+    return {"message": "Página atualizada"}
+
+
+@router.delete("/pages/{page_id}")
+def delete_page(page_id: int, user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    page = db.query(DashboardPage).filter(DashboardPage.id == page_id).first()
+    if not page:
+        raise HTTPException(status_code=404, detail="Página não encontrada")
+    db.delete(page)
+    db.commit()
+    return {"message": "Página removida"}
+
+
+# ============================================================
+# LAYOUTS CRUD
+# ============================================================
 
 @router.get("/layouts")
 def list_layouts(user: User = Depends(get_current_user), db: Session = Depends(get_db)):

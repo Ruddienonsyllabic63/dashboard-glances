@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional, List
-from datetime import datetime, timezone
-from app.database import get_db, Machine, User
+from datetime import datetime, timezone, timedelta
+from app.database import get_db, Machine, User, MonitorLog
 from app.auth import get_current_user, require_admin
 from app.services.glances import GlancesClient
 
@@ -16,6 +16,9 @@ class MachineCreate(BaseModel):
     port: int = 61208
     is_local: bool = False
     tags: str = ""
+    icon: str = "mdi:server"
+    description: str = ""
+    color: str = ""
 
 
 class MachineUpdate(BaseModel):
@@ -24,6 +27,9 @@ class MachineUpdate(BaseModel):
     port: Optional[int] = None
     enabled: Optional[bool] = None
     tags: Optional[str] = None
+    icon: Optional[str] = None
+    description: Optional[str] = None
+    color: Optional[str] = None
 
 
 @router.get("/")
@@ -39,6 +45,9 @@ def list_machines(user=Depends(get_current_user), db: Session = Depends(get_db))
         result.append({
             "id": m.id, "name": m.name, "host": m.host, "port": m.port,
             "is_local": m.is_local, "enabled": m.enabled, "tags": m.tags,
+            "icon": m.icon or "mdi:server",
+            "description": m.description or "",
+            "color": m.color or "",
             "status": "online" if alive else "offline",
             "last_seen": m.last_seen.isoformat() if m.last_seen else None,
             "created_at": m.created_at.isoformat() if m.created_at else None,
@@ -48,7 +57,10 @@ def list_machines(user=Depends(get_current_user), db: Session = Depends(get_db))
 
 @router.post("/")
 def create_machine(req: MachineCreate, user: User = Depends(require_admin), db: Session = Depends(get_db)):
-    machine = Machine(name=req.name, host=req.host, port=req.port, is_local=req.is_local, tags=req.tags)
+    machine = Machine(
+        name=req.name, host=req.host, port=req.port, is_local=req.is_local,
+        tags=req.tags, icon=req.icon, description=req.description, color=req.color,
+    )
     db.add(machine)
     db.commit()
     db.refresh(machine)
@@ -85,8 +97,72 @@ def get_machine_data(machine_id: int, user=Depends(get_current_user), db: Sessio
         raise HTTPException(status_code=404, detail="Máquina não encontrada")
     client = GlancesClient(machine.host, machine.port)
     data = client.get_all()
-    data["machine"] = {"id": machine.id, "name": machine.name, "host": machine.host}
+    data["machine"] = {
+        "id": machine.id, "name": machine.name, "host": machine.host,
+        "icon": machine.icon or "mdi:server",
+        "description": machine.description or "",
+        "color": machine.color or "",
+    }
     return data
+
+
+@router.get("/{machine_id}/detail")
+def get_machine_detail(machine_id: int, user=Depends(get_current_user), db: Session = Depends(get_db)):
+    machine = db.query(Machine).filter(Machine.id == machine_id).first()
+    if not machine:
+        raise HTTPException(status_code=404, detail="Máquina não encontrada")
+    client = GlancesClient(machine.host, machine.port)
+    alive = client.is_alive()
+    if alive:
+        machine.last_seen = datetime.now(timezone.utc)
+        db.commit()
+    data = client.get_all()
+    data["machine"] = {
+        "id": machine.id, "name": machine.name, "host": machine.host,
+        "port": machine.port, "icon": machine.icon or "mdi:server",
+        "description": machine.description or "",
+        "color": machine.color or "",
+        "tags": machine.tags or "",
+    }
+    data["status"] = "online" if alive else "offline"
+    return data
+
+
+@router.get("/{machine_id}/history")
+def get_machine_history(
+    machine_id: int,
+    hours: int = Query(default=24, ge=1, le=168),
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    machine = db.query(Machine).filter(Machine.id == machine_id).first()
+    if not machine:
+        raise HTTPException(status_code=404, detail="Máquina não encontrada")
+    since = datetime.now(timezone.utc) - timedelta(hours=hours)
+    logs = (
+        db.query(MonitorLog)
+        .filter(MonitorLog.machine_id == machine_id, MonitorLog.timestamp >= since)
+        .order_by(MonitorLog.timestamp.asc())
+        .all()
+    )
+    return {
+        "machine_id": machine_id,
+        "machine_name": machine.name,
+        "hours": hours,
+        "points": [
+            {
+                "timestamp": log.timestamp.isoformat(),
+                "cpu": log.cpu_percent,
+                "mem": log.mem_percent,
+                "disk": log.disk_root_percent,
+                "load1": log.load_1,
+                "load5": log.load_5,
+                "load15": log.load_15,
+                "process_count": log.process_count,
+            }
+            for log in logs
+        ],
+    }
 
 
 @router.get("/{machine_id}/cpu")

@@ -39,13 +39,15 @@
     <h3>🔔 Preferências de Alerta</h3>
     <p class="section-desc">Configure como deseja receber os alertas de monitoramento.</p>
     <div class="config-grid">
-      <label>
+      <label class="toggle">
         <input type="checkbox" id="profileAlertsEmail" {% if user.receive_alerts_email %}checked{% endif %}>
-        Receber alertas por E-mail
+        <span class="toggle-track"></span>
+        <span class="toggle-label">Receber alertas por E-mail</span>
       </label>
-      <label>
+      <label class="toggle">
         <input type="checkbox" id="profileAlertsTelegram" {% if user.receive_alerts_telegram %}checked{% endif %}>
-        Receber alertas por Telegram
+        <span class="toggle-track"></span>
+        <span class="toggle-label">Receber alertas por Telegram</span>
       </label>
     </div>
     <div style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-muted)">

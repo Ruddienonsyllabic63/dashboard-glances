@@ -34,7 +34,15 @@
       "default": "Default",
       "custom": "Custom"
     },
-    "no_machines": "No machines found"
+    "no_machines": "No machines found",
+    "all_pages": "All",
+    "add_page": "Add Page",
+    "create_page": "Create Page",
+    "edit_page": "Edit Page",
+    "page_name": "Page Name",
+    "page_icon": "Page Icon",
+    "select_machines": "Select Machines",
+    "confirm_delete_page": "Delete this page?"
   },
   "sidebar": {
     "filters": "Filters",
@@ -93,7 +101,10 @@
     "firewalld": "firewalld (CentOS)",
     "iptables": "iptables",
     "test_connection": "Test Connection",
-    "server_ip": "Server IP Configuration"
+    "server_ip": "Server IP Configuration",
+    "icon": "Icon",
+    "color": "Color",
+    "description": "Description"
   },
   "users": {
     "username": "Username",
@@ -207,9 +218,29 @@
     "total_logs": "Total Logs",
     "test_email": "Test Email",
     "test_bot": "Test Bot",
+    "save_smtp": "Save SMTP",
+    "save_telegram": "Save Telegram",
+    "email_sent": "Email sent successfully!",
+    "email_error": "Error:",
+    "bot_connected": "connected!",
+    "alerts_count": "Alerts",
+    "offline": "Offline",
     "gmail_hint": "Gmail: Use an App Password (not your regular password).",
     "outlook_hint": "Outlook: Host smtp.office365.com, port 587.",
-    "local_hint": "Local SMTP: Use localhost and port 25."
+    "local_hint": "Local SMTP: Use localhost and port 25.",
+    "how_to_create_bot": "How to create the Bot:",
+    "bot_step1": "Open Telegram and search for",
+    "bot_step2": "Send",
+    "bot_step3": "Give the bot a name (e.g.",
+    "bot_step4": "Give a username (e.g.",
+    "bot_step5": "Copy the",
+    "bot_step6": "token provided by BotFather",
+    "bot_step7": "To get your",
+    "bot_step8": "chat_id, send any message to the bot and visit:",
+    "bot_step9": "Search for",
+    "bot_step10": "in the result",
+    "sending": "Sending...",
+    "testing": "Testing..."
   },
   "setup": {
     "title": "Client Installation Guide",
@@ -226,7 +257,28 @@
     "test_connection": "Test Connection",
     "server_ip": "Server IP Configuration",
     "copy": "Copy",
-    "copied": "Copied!"
+    "copied": "Copied!",
+    "step1_title": "Server IP",
+    "step1_desc": "Configure this server's public IP to display in the firewall instructions below.",
+    "step1_label": "Server IP:",
+    "step1_placeholder": "e.g. 203.0.113.50",
+    "step2_title": "Install Glances on Client",
+    "step2_desc": "Install Glances with web API support (required for the dashboard).",
+    "docker_recommended": "Docker (Recommended - simplest)",
+    "step3_title": "Configure Firewall",
+    "step3_desc": "Open port 61208 on the client firewall so the server can access it.",
+    "step4_title": "Test Connection",
+    "step4_desc": "Verify that Glances is responding on the client.",
+    "add_to_dashboard": "Add to Dashboard",
+    "add_to_dashboard_desc": "Go to",
+    "add_to_dashboard_link": "Settings → Machines",
+    "add_to_dashboard_end": "and add:",
+    "name_label": "Name:",
+    "name_desc": "Friendly machine name",
+    "host_label": "Host:",
+    "host_desc": "Client IP or hostname",
+    "port_label": "Port:",
+    "port_desc": "61208 (default)"
   },
   "profile": {
     "title": "My Profile",
@@ -308,7 +360,16 @@
     "local": "Local",
     "filtered_from": "filtered from",
     "select_users_procs": "Select users and processes to filter",
-    "memory": "Memory"
+    "memory": "Memory",
+    "overview": "Overview",
+    "sensors": "Sensors",
+    "history": "History",
+    "hostname": "Hostname",
+    "os": "OS",
+    "no_data": "No data available",
+    "no_sensors": "No sensors detected",
+    "no_history": "No history data available",
+    "period": "Period"
   },
   "filter_modal": {
     "title": "Filters",

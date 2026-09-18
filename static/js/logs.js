@@ -78,7 +78,7 @@ function renderPerUserList() {
   var container = document.getElementById('perUserCheckboxes');
   container.innerHTML = '';
   (window._perUserSelected || []).forEach(function(u) {
-    container.innerHTML += '<label class="filter-item" style="display:inline-flex;align-items:center;gap:0.3rem"><input type="checkbox" checked onchange="togglePerUser(this, \'' + u.replace(/'/g, "\\'") + '\')"> ' + u + ' <span style="cursor:pointer;color:var(--red);font-size:0.85rem" onclick="removePerUser(\'' + u.replace(/'/g, "\\'") + '\')" title="Remover">✕</span></label>';
+    container.innerHTML += '<label class="toggle" style="display:inline-flex;align-items:center;gap:0.3rem"><input type="checkbox" checked onchange="togglePerUser(this, \'' + u.replace(/'/g, "\\'") + '\')"><span class="toggle-track"></span><span class="toggle-label">' + u + '</span> <span style="cursor:pointer;color:var(--red);font-size:0.85rem" onclick="removePerUser(\'' + u.replace(/'/g, "\\'") + '\')" title="Remover">✕</span></label>';
   });
 }
 
@@ -94,9 +94,8 @@ function loadDetectedUsers(selected) {
     }
     users.forEach(function(u) {
       var already = selectedArray.indexOf(u) !== -1;
-      var cls = already ? 'filter-item' : 'filter-item';
       var style = already ? 'opacity:0.5;text-decoration:line-through' : '';
-      container.innerHTML += '<label class="' + cls + '" style="' + style + '"><input type="checkbox" ' + (already ? 'checked disabled' : '') + ' onchange="addDetectedUser(\'' + u.replace(/'/g, "\\'") + '\')"> ' + u + '</label>';
+      container.innerHTML += '<label class="toggle" style="' + style + '"><input type="checkbox" ' + (already ? 'checked disabled' : '') + ' onchange="addDetectedUser(\'' + u.replace(/'/g, "\\'") + '\')"><span class="toggle-track"></span><span class="toggle-label">' + u + '</span></label>';
     });
   });
 }
@@ -169,7 +168,7 @@ function loadMonitorMachines() {
     var list = document.getElementById('monitorMachineList');
     var sel = document.getElementById('logMachineFilter');
     (data || []).forEach(function(m) {
-      list.innerHTML += '<label class="filter-item"><input type="checkbox" class="monitor-machine-cb" data-id="' + m.id + '" checked> ' + m.name + '</label>';
+      list.innerHTML += '<label class="toggle"><input type="checkbox" class="monitor-machine-cb" data-id="' + m.id + '" checked><span class="toggle-track"></span><span class="toggle-label">' + m.name + '</span></label>';
       var opt = document.createElement('option');
       opt.value = m.id;
       opt.textContent = m.name;

@@ -33,11 +33,11 @@
   <div class="sidebar-section">
     <h3>{{ translations.sidebar.display }}</h3>
     <div class="filter-group">
-      <label><input type="checkbox" id="filterCPU" checked onchange="applyFilters()"> {{ translations.dashboard.cpu }}</label>
-      <label><input type="checkbox" id="filterMem" checked onchange="applyFilters()"> {{ translations.dashboard.memory }}</label>
-      <label><input type="checkbox" id="filterDisk" checked onchange="applyFilters()"> {{ translations.dashboard.disk }}</label>
-      <label><input type="checkbox" id="filterNet" checked onchange="applyFilters()"> {{ translations.dashboard.network }}</label>
-      <label><input type="checkbox" id="filterProc" checked onchange="applyFilters()"> {{ translations.dashboard.procs }}</label>
+      <label class="toggle"><input type="checkbox" id="filterCPU" checked onchange="applyFilters()"><span class="toggle-track"></span><span class="toggle-label">{{ translations.dashboard.cpu }}</span></label>
+      <label class="toggle"><input type="checkbox" id="filterMem" checked onchange="applyFilters()"><span class="toggle-track"></span><span class="toggle-label">{{ translations.dashboard.memory }}</span></label>
+      <label class="toggle"><input type="checkbox" id="filterDisk" checked onchange="applyFilters()"><span class="toggle-track"></span><span class="toggle-label">{{ translations.dashboard.disk }}</span></label>
+      <label class="toggle"><input type="checkbox" id="filterNet" checked onchange="applyFilters()"><span class="toggle-track"></span><span class="toggle-label">{{ translations.dashboard.network }}</span></label>
+      <label class="toggle"><input type="checkbox" id="filterProc" checked onchange="applyFilters()"><span class="toggle-track"></span><span class="toggle-label">{{ translations.dashboard.procs }}</span></label>
     </div>
   </div>
   <div class="sidebar-section">
@@ -87,6 +87,12 @@
 </aside>
 
 <main class="main-content" id="mainContent">
+  <div class="page-tabs" id="pageTabs">
+    <button class="page-tab active" data-page-id="all" onclick="selectPage('all')">
+      <span class="mdi mdi-view-dashboard"></span> {{ translations.dashboard.all_pages }}
+    </button>
+    <button class="page-tab-add" onclick="openPageModal()" title="{{ translations.dashboard.add_page }}">+</button>
+  </div>
   <div class="overview-bar" id="overviewBar">
     <div class="overview-stat"><span class="stat-value" id="statTotal">0</span><span class="stat-label">Total</span></div>
     <div class="overview-stat online"><span class="stat-value" id="statOnline">0</span><span class="stat-label">Online</span></div>
@@ -113,6 +119,39 @@
     <div class="modal-actions">
       <button class="btn-secondary" onclick="closeLayoutModal()">Cancelar</button>
       <button class="btn-primary" onclick="confirmSaveLayout()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="pageModal" style="display:none" onclick="closePageModal(event)">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <h3 id="pageModalTitle">{{ translations.dashboard.create_page }}</h3>
+    <input type="hidden" id="pageEditId" value="">
+    <div style="margin-bottom:0.75rem">
+      <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:0.3rem">{{ translations.dashboard.page_name }}</label>
+      <input type="text" id="pageNameInput" placeholder="Ex: Produção" maxlength="50" style="width:100%">
+    </div>
+    <div style="margin-bottom:0.75rem">
+      <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:0.3rem">{{ translations.dashboard.page_icon }}</label>
+      <div class="icon-picker-wrap">
+        <div class="icon-picker-trigger" id="pageIconTrigger" onclick="togglePageIconPicker()">
+          <i class="mdi mdi-view-dashboard" id="pageIconPreview"></i>
+          <span id="pageIconName">mdi:view-dashboard</span>
+          <span class="mdi mdi-chevron-down" style="margin-left:auto;font-size:0.9rem"></span>
+        </div>
+        <div class="icon-picker-dropdown" id="pageIconDropdown">
+          <input type="text" class="icon-picker-search" id="pageIconSearch" placeholder="Buscar ícone..." oninput="filterPageIcons()">
+          <div class="icon-picker-grid" id="pageIconGrid"></div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-bottom:0.75rem">
+      <label style="font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:0.3rem">{{ translations.dashboard.select_machines }}</label>
+      <div id="pageMachinesList" style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.5rem"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closePageModal()">{{ translations.common.cancel }}</button>
+      <button class="btn-primary" onclick="confirmSavePage()">{{ translations.common.save }}</button>
     </div>
   </div>
 </div>

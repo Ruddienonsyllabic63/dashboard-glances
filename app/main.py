@@ -126,6 +126,15 @@ def settings_page(request: Request):
     return render_template("settings.html", request, {"user": user, "config": cfg})
 
 
+@app.get("/machine/{machine_id}", response_class=HTMLResponse)
+def machine_detail_page(request: Request, machine_id: int):
+    user = get_user_from_cookie(request)
+    if not user:
+        return RedirectResponse("/login", status_code=302)
+    cfg = get_system_config(request)
+    return render_template("machine.html", request, {"user": user, "config": cfg, "machine_id": machine_id})
+
+
 @app.get("/logs", response_class=HTMLResponse)
 def logs_page(request: Request):
     user = get_user_from_cookie(request)

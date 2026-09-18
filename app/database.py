@@ -41,6 +41,9 @@ class Machine(Base):
     is_local = Column(Boolean, default=False)
     enabled = Column(Boolean, default=True)
     tags = Column(String(500), default="")
+    icon = Column(String(50), default="mdi:server")
+    description = Column(String(255), default="")
+    color = Column(String(20), default="")
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     last_seen = Column(DateTime, nullable=True)
 
@@ -52,6 +55,17 @@ class DashboardLayout(Base):
     name = Column(String(100), nullable=False)
     config = Column(Text, default="{}")
     is_default = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class DashboardPage(Base):
+    __tablename__ = "dashboard_pages"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, nullable=False)
+    name = Column(String(100), nullable=False)
+    icon = Column(String(50), default="mdi:view-dashboard")
+    position = Column(Integer, default=0)
+    machine_ids = Column(Text, default="[]")
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 

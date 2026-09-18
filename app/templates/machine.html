@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Machine - Glances Dashboard{% endblock %}
+{% block body %}
+<nav class="detail-topbar">
+  <a href="/" class="btn-icon" title="Voltar ao dashboard"><span class="mdi mdi-arrow-left"></span></a>
+  <div class="detail-header">
+    <i class="mdi mdi-server" id="detailIcon"></i>
+    <div>
+      <h2 id="detailName">Carregando...</h2>
+      <div class="detail-host" id="detailHost"></div>
+    </div>
+  </div>
+  <div class="detail-status" id="detailStatus">
+    <span class="status-dot offline"></span> offline
+  </div>
+</nav>
+
+<div class="detail-tabs" id="detailTabs">
+  <button class="detail-tab active" data-tab="overview" onclick="switchDetailTab('overview')">
+    <span class="mdi mdi-view-dashboard"></span> {{ translations.machine.overview }}
+  </button>
+  <button class="detail-tab" data-tab="cpu" onclick="switchDetailTab('cpu')">
+    <span class="mdi mdi-cpu-64-bit"></span> CPU
+  </button>
+  <button class="detail-tab" data-tab="memory" onclick="switchDetailTab('memory')">
+    <span class="mdi mdi-memory"></span> {{ translations.machine.memory }}
+  </button>
+  <button class="detail-tab" data-tab="disk" onclick="switchDetailTab('disk')">
+    <span class="mdi mdi-harddisk"></span> {{ translations.machine.disks }}
+  </button>
+  <button class="detail-tab" data-tab="network" onclick="switchDetailTab('network')">
+    <span class="mdi mdi-network"></span> {{ translations.machine.network }}
+  </button>
+  <button class="detail-tab" data-tab="sensors" onclick="switchDetailTab('sensors')">
+    <span class="mdi mdi-thermometer"></span> {{ translations.machine.sensors }}
+  </button>
+  <button class="detail-tab" data-tab="processes" onclick="switchDetailTab('processes')">
+    <span class="mdi mdi-file-tree"></span> {{ translations.machine.processes }}
+  </button>
+  <button class="detail-tab" data-tab="history" onclick="switchDetailTab('history')">
+    <span class="mdi mdi-chart-line"></span> {{ translations.machine.history }}
+  </button>
+</div>
+
+<div class="detail-content">
+  <!-- OVERVIEW -->
+  <div class="detail-section active" id="section-overview">
+    <div class="info-grid" id="overviewSystemInfo"></div>
+    <div class="gauge-row" id="overviewGauges"></div>
+  </div>
+
+  <!-- CPU -->
+  <div class="detail-section" id="section-cpu">
+    <div class="gauge-row" id="cpuGauges"></div>
+    <div id="cpuPerCore" style="margin-top:1rem"></div>
+  </div>
+
+  <!-- MEMORY -->
+  <div class="detail-section" id="section-memory">
+    <div class="gauge-row" id="memGauges"></div>
+    <div id="memDetails"></div>
+  </div>
+
+  <!-- DISK -->
+  <div class="detail-section" id="section-disk">
+    <div id="diskList"></div>
+  </div>
+
+  <!-- NETWORK -->
+  <div class="detail-section" id="section-network">
+    <div id="networkList"></div>
+  </div>
+
+  <!-- SENSORS -->
+  <div class="detail-section" id="section-sensors">
+    <div class="sensor-grid" id="sensorList"></div>
+  </div>
+
+  <!-- PROCESSES -->
+  <div class="detail-section" id="section-processes">
+    <input type="text" class="process-search" id="processSearch" placeholder="Buscar processo..." oninput="filterProcesses()">
+    <div style="overflow-x:auto">
+      <table class="detail-process-table" id="processTable">
+        <thead>
+          <tr>
+            <th>PID</th>
+            <th>{{ translations.machine.name }}</th>
+            <th>{{ translations.machine.user }}</th>
+            <th>CPU%</th>
+            <th>Mem%</th>
+            <th>Threads</th>
+            <th>Status</th>
+            <th>Command</th>
+          </tr>
+        </thead>
+        <tbody id="processTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="detail-section" id="section-history">
+    <div style="display:flex;gap:0.5rem;margin-bottom:1rem;align-items:center">
+      <label style="font-size:0.8rem;color:var(--text-muted)">{{ translations.machine.period }}:</label>
+      <select id="historyPeriod" onchange="loadHistory()" style="padding:0.4rem;background:var(--bg-card);color:var(--text-primary);border:1px solid var(--border);border-radius:var(--radius-sm)">
+        <option value="1">1h</option>
+        <option value="6">6h</option>
+        <option value="24" selected>24h</option>
+        <option value="72">3d</option>
+        <option value="168">7d</option>
+      </select>
+    </div>
+    <div class="chart-container">
+      <canvas id="historyChart" height="200"></canvas>
+    </div>
+  </div>
+</div>
+
+<script>
+  var __translations = {{ translations | tojson }};
+  function t(key) {
+    var parts = key.split('.');
+    var val = __translations;
+    for (var i = 0; i < parts.length; i++) {
+      if (val && val[parts[i]] !== undefined) val = val[parts[i]];
+      else return key;
+    }
+    return (typeof val === 'string') ? val : key;
+  }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="/static/js/machine.js"></script>
+<script>
+  initMachineDetail({{ machine_id }});
+</script>
+{% endblock %}

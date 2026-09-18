@@ -1,7 +1,40 @@
 var TOKEN = '';
 
+var POPULAR_ICONS = [
+  'mdi:server', 'mdi:desktop-tower', 'mdi:laptop', 'mdi:router-wireless',
+  'mdi:nas', 'mdi:cloud', 'mdi:network', 'mdi:database',
+  'mdi:harddisk', 'mdi:monitor', 'mdi:television', 'mdi:cellphone',
+  'mdi:printer', 'mdi:camera', 'mdi:cctv', 'mdi:shield-home',
+  'mdi:home', 'mdi:factory', 'mdi:domain', 'mdi:office-building',
+  'mdi:server-network', 'mdi:access-point-network', 'mdi:lan',
+  'mdi:web', 'mdi:radio-tower', 'mdi:access-point', 'mdi:switch',
+  'mdi:docker', 'mdi:container', 'mdi:cube', 'mdi:hexagon',
+  'mdi:raspberry-pi', 'mdi:chip', 'mdi:microchip', 'mdi:memory',
+  'mdi:thermometer', 'mdi:fan', 'mdi:car-battery', 'mdi:battery',
+  'mdi:power-plug', 'mdi:lightning-bolt', 'mdi:flash',
+  'mdi:video', 'mdi:music', 'mdi:filmstrip', 'mdi:gamepad-variant',
+  'mdi:robot', 'mdi:brain', 'mdi:fire', 'mdi:leaf',
+  'mdi:lock', 'mdi:key', 'mdi:shield-check', 'mdi:eye',
+  'mdi:account', 'mdi:account-group', 'mdi:wrench', 'mdi:screwdriver',
+  'mdi:cog', 'mdi:tune', 'mdi:sliders', 'mdi:magnify',
+  'mdi:bell', 'mdi:bell-ring', 'mdi:email', 'mdi:phone',
+  'mdi:chart-line', 'mdi:chart-bar', 'mdi:chart-pie', 'mdi:chart-areaspline',
+  'mdi:speedometer', 'mdi:gauge', 'mdi:dashboard',
+  'mdi:calendar', 'mdi:clock', 'mdi:timer', 'mdi:history',
+  'mdi:spotify', 'mdi:youtube', 'mdi:github',
+];
+
+var MACHINE_COLORS = [
+  '', '#3b82f6', '#22c55e', '#ef4444', '#eab308',
+  '#f97316', '#a855f7', '#06b6d4', '#ec4899', '#14b8a6',
+];
+
+var selectedMachineIcon = 'mdi:server';
+var selectedMachineColor = '';
+
 function initSettings() {
   TOKEN = getToken();
+  initColorPicker();
 }
 
 function getToken() {
@@ -36,12 +69,94 @@ function loadSettings() {
   }
 }
 
+// ============================================================
+// ICON PICKER (machine form)
+// ============================================================
+
+function toggleMachineIconPicker() {
+  var dd = document.getElementById('machineIconDropdown');
+  var isOpen = dd.classList.contains('open');
+  dd.classList.toggle('open');
+  if (!isOpen) {
+    renderMachineIconGrid('');
+    document.getElementById('machineIconSearch').value = '';
+    document.getElementById('machineIconSearch').focus();
+  }
+}
+
+function renderMachineIconGrid(filter) {
+  var grid = document.getElementById('machineIconGrid');
+  var icons = POPULAR_ICONS;
+  if (filter) {
+    var q = filter.toLowerCase();
+    icons = icons.filter(function(ic) { return ic.indexOf(q) !== -1; });
+  }
+  var html = '';
+  icons.forEach(function(ic) {
+    var sel = ic === selectedMachineIcon ? ' selected' : '';
+    html += '<div class="icon-picker-item' + sel + '" data-icon="' + ic + '" onclick="selectMachineIcon(\'' + ic + '\')" title="' + ic + '">';
+    html += '<i class="mdi ' + ic + '"></i></div>';
+  });
+  grid.innerHTML = html;
+}
+
+function selectMachineIcon(icon) {
+  selectedMachineIcon = icon;
+  document.getElementById('machineIconPreview').className = 'mdi ' + icon;
+  document.getElementById('machineIconName').textContent = icon;
+  document.getElementById('machineIconDropdown').classList.remove('open');
+}
+
+function filterMachineIcons() {
+  var q = document.getElementById('machineIconSearch').value;
+  renderMachineIconGrid(q);
+}
+
+// Close icon picker on outside click
+document.addEventListener('click', function(e) {
+  var wrap = document.querySelector('#tab-machines .icon-picker-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    var dd = document.getElementById('machineIconDropdown');
+    if (dd) dd.classList.remove('open');
+  }
+});
+
+// ============================================================
+// COLOR PICKER
+// ============================================================
+
+function initColorPicker() {
+  var row = document.getElementById('machineColorRow');
+  if (!row) return;
+  var html = '<div class="color-swatch no-color selected" data-color="" onclick="selectMachineColor(\'\')"></div>';
+  MACHINE_COLORS.forEach(function(c) {
+    if (!c) return;
+    html += '<div class="color-swatch" style="background:' + c + '" data-color="' + c + '" onclick="selectMachineColor(\'' + c + '\')"></div>';
+  });
+  row.innerHTML = html;
+}
+
+function selectMachineColor(color) {
+  selectedMachineColor = color;
+  document.querySelectorAll('#machineColorRow .color-swatch').forEach(function(sw) {
+    sw.classList.toggle('selected', sw.dataset.color === color);
+  });
+}
+
+// ============================================================
+// MACHINES
+// ============================================================
+
 function loadMachines() {
   api('GET', '/machines/').then(function(data) {
     var tbody = document.getElementById('machinesBody');
     var html = '';
     data.forEach(function(m) {
-      html += '<tr>';
+      var icon = m.icon || 'mdi:server';
+      var color = m.color || '';
+      var colorStyle = color ? ' style="border-left:3px solid ' + color + ';padding-left:0.5rem"' : '';
+      html += '<tr' + colorStyle + '>';
+      html += '<td><i class="mdi ' + icon + '" style="font-size:1.2rem"></i></td>';
       html += '<td>' + m.name + '</td>';
       html += '<td>' + m.host + '</td>';
       html += '<td>' + m.port + '</td>';
@@ -51,7 +166,7 @@ function loadMachines() {
       }
       html += '</tr>';
     });
-    tbody.innerHTML = html || '<tr><td colspan="5" style="text-align:center;color:var(--text-muted)">Nenhuma máquina cadastrada</td></tr>';
+    tbody.innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted)">Nenhuma máquina cadastrada</td></tr>';
   });
 }
 
@@ -61,11 +176,21 @@ function addMachine() {
   var port = parseInt(document.getElementById('machinePort').value) || 61208;
   var isLocal = document.getElementById('machineLocal').checked;
   var tags = document.getElementById('machineTags').value.trim();
+  var description = document.getElementById('machineDescription').value.trim();
   if (!name || !host) return alert('Nome e Host são obrigatórios');
-  api('POST', '/machines/', { name: name, host: host, port: port, is_local: isLocal, tags: tags }).then(function(res) {
+  api('POST', '/machines/', {
+    name: name, host: host, port: port, is_local: isLocal, tags: tags,
+    icon: selectedMachineIcon, description: description, color: selectedMachineColor,
+  }).then(function(res) {
     document.getElementById('machineName').value = '';
     document.getElementById('machineHost').value = '';
     document.getElementById('machineTags').value = '';
+    document.getElementById('machineDescription').value = '';
+    selectedMachineIcon = 'mdi:server';
+    selectedMachineColor = '';
+    document.getElementById('machineIconPreview').className = 'mdi mdi-server';
+    document.getElementById('machineIconName').textContent = 'mdi:server';
+    initColorPicker();
     loadMachines();
   });
 }
@@ -101,6 +226,10 @@ function deleteMachine(id) {
   if (!confirm('Remover esta máquina?')) return;
   api('DELETE', '/machines/' + id).then(function() { loadMachines(); });
 }
+
+// ============================================================
+// USERS
+// ============================================================
 
 function loadUsers() {
   api('GET', '/system/users').then(function(data) {
@@ -144,12 +273,8 @@ function addUser() {
     return;
   }
   api('POST', '/auth/register', {
-    username: username,
-    password: password,
-    role: role,
-    full_name: fullName,
-    email: email,
-    telegram_username: telegram
+    username: username, password: password, role: role,
+    full_name: fullName, email: email, telegram_username: telegram,
   }).then(function(res) {
     if (res.message) {
       result.className = 'test-result success';
@@ -169,24 +294,22 @@ function addUser() {
 
 function changeRole(userId, newRole) {
   api('PUT', '/auth/users/role', { user_id: userId, role: newRole }).then(function(res) {
-    if (res.message) {
-      loadUsers();
-    } else {
-      alert(res.detail || 'Erro ao alterar role');
-    }
+    if (res.message) loadUsers();
+    else alert(res.detail || 'Erro ao alterar role');
   });
 }
 
 function deleteUser(userId, username) {
   if (!confirm('Remover o usuário "' + username + '"?')) return;
   api('DELETE', '/auth/users/' + userId).then(function(res) {
-    if (res.message) {
-      loadUsers();
-    } else {
-      alert(res.detail || 'Erro ao remover usuário');
-    }
+    if (res.message) loadUsers();
+    else alert(res.detail || 'Erro ao remover usuário');
   });
 }
+
+// ============================================================
+// BACKUPS
+// ============================================================
 
 function createBackup() {
   api('POST', '/backup/create').then(function(res) {
@@ -222,6 +345,10 @@ function restoreBackup(path) {
     loadMachines();
   });
 }
+
+// ============================================================
+// PASSWORD / PROFILE
+// ============================================================
 
 function changePassword() {
   var oldP = document.getElementById('currentPassword').value;
@@ -266,7 +393,7 @@ function saveProfile() {
     email: document.getElementById('profileEmail').value,
     telegram_username: document.getElementById('profileTelegram').value,
     receive_alerts_email: document.getElementById('alertEmail').checked,
-    receive_alerts_telegram: document.getElementById('alertTelegram').checked
+    receive_alerts_telegram: document.getElementById('alertTelegram').checked,
   }).then(function(d) {
     r.style.color = d.message ? 'var(--green)' : 'var(--red)';
     r.textContent = d.message || d.detail || 'Erro';
@@ -277,7 +404,7 @@ function saveAlertPrefs() {
   var r = document.getElementById('alertResult');
   api('PUT', '/system/me', {
     receive_alerts_email: document.getElementById('alertEmail').checked,
-    receive_alerts_telegram: document.getElementById('alertTelegram').checked
+    receive_alerts_telegram: document.getElementById('alertTelegram').checked,
   }).then(function(d) {
     r.style.color = d.message ? 'var(--green)' : 'var(--red)';
     r.textContent = d.message || d.detail || 'Erro';

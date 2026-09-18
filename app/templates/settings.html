@@ -62,19 +62,46 @@
 
       <div class="tab-panel" id="tab-machines">
         <h3>{{ translations.settings.machines }} Monitoredas</h3>
-        <div class="add-machine-form">
-          <input type="text" id="machineName" placeholder="{{ translations.settings.machine_name }}">
-          <input type="text" id="machineHost" placeholder="{{ translations.settings.host }}">
-          <input type="number" id="machinePort" value="61208" placeholder="{{ translations.settings.port }}">
-          <label><input type="checkbox" id="machineLocal"> Local</label>
-          <input type="text" id="machineTags" placeholder="{{ translations.settings.tags }}">
-          <button class="btn-primary" onclick="addMachine()" style="width:auto;padding:0.5rem 1.2rem">Adicionar</button>
-          <button class="btn-secondary" onclick="testMachine()">{{ translations.settings.test }}</button>
+        <div class="add-machine-form" style="flex-direction:column;align-items:stretch;gap:0.5rem">
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+            <input type="text" id="machineName" placeholder="{{ translations.settings.machine_name }}" style="flex:1;min-width:120px">
+            <input type="text" id="machineHost" placeholder="{{ translations.settings.host }}" style="flex:1;min-width:120px">
+            <input type="number" id="machinePort" value="61208" placeholder="{{ translations.settings.port }}" style="width:90px">
+            <label class="toggle"><input type="checkbox" id="machineLocal"><span class="toggle-track"></span><span class="toggle-label">Local</span></label>
+          </div>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+            <input type="text" id="machineTags" placeholder="{{ translations.settings.tags }}" style="flex:1;min-width:120px">
+            <input type="text" id="machineDescription" placeholder="{{ translations.settings.description }}" style="flex:1;min-width:150px">
+          </div>
+          <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:flex-start">
+            <div class="icon-picker-wrap" style="flex:1;min-width:200px">
+              <label style="font-size:0.75rem;color:var(--text-muted);display:block;margin-bottom:0.3rem">{{ translations.settings.icon }}</label>
+              <div class="icon-picker-trigger" id="machineIconTrigger" onclick="toggleMachineIconPicker()">
+                <i class="mdi mdi-server" id="machineIconPreview"></i>
+                <span id="machineIconName">mdi:server</span>
+                <span class="mdi mdi-chevron-down" style="margin-left:auto;font-size:0.9rem"></span>
+              </div>
+              <div class="icon-picker-dropdown" id="machineIconDropdown">
+                <input type="text" class="icon-picker-search" id="machineIconSearch" placeholder="Buscar ícone..." oninput="filterMachineIcons()">
+                <div class="icon-picker-grid" id="machineIconGrid"></div>
+              </div>
+            </div>
+            <div style="flex:1;min-width:200px">
+              <label style="font-size:0.75rem;color:var(--text-muted);display:block;margin-bottom:0.3rem">{{ translations.settings.color }}</label>
+              <div class="color-picker-row" id="machineColorRow">
+                <div class="color-swatch no-color selected" data-color="" onclick="selectMachineColor('')"></div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;gap:0.5rem">
+            <button class="btn-primary" onclick="addMachine()" style="width:auto;padding:0.5rem 1.2rem">Adicionar</button>
+            <button class="btn-secondary" onclick="testMachine()">{{ translations.settings.test }}</button>
+          </div>
         </div>
         <div id="testResult" class="test-result"></div>
         <table class="data-table" id="machinesTable">
           <thead>
-            <tr><th>Nome</th><th>Host</th><th>{{ translations.settings.port }}</th><th>Status</th><th>Ações</th></tr>
+            <tr><th></th><th>Nome</th><th>Host</th><th>{{ translations.settings.port }}</th><th>Status</th><th>Ações</th></tr>
           </thead>
           <tbody id="machinesBody"></tbody>
         </table>
@@ -131,13 +158,15 @@
           <h3>🔔 Preferências de Alerta</h3>
           <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1rem">Configure como deseja receber os alertas de monitoramento.</p>
           <div class="config-grid">
-            <label>
+            <label class="toggle">
               <input type="checkbox" id="alertEmail" {% if user.receive_alerts_email %}checked{% endif %}>
-              Receber alertas por E-mail
+              <span class="toggle-track"></span>
+              <span class="toggle-label">Receber alertas por E-mail</span>
             </label>
-            <label>
+            <label class="toggle">
               <input type="checkbox" id="alertTelegram" {% if user.receive_alerts_telegram %}checked{% endif %}>
-              Receber alertas por Telegram
+              <span class="toggle-track"></span>
+              <span class="toggle-label">Receber alertas por Telegram</span>
             </label>
           </div>
           <div style="margin-top:1rem">
