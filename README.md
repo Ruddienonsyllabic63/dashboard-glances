@@ -16,6 +16,7 @@ A web monitoring dashboard for [Glances](https://nicolargo.github.io/glances/) w
 - **GPU monitoring** — Load, temperature, and VRAM usage (requires Glances GPU plugin)
 - **Multiple templates** — Grid, list, cards, and compact views
 - **Multi-machine monitoring** — Monitor multiple Glances servers simultaneously
+- **Web-based installation guide** — Built-in client setup page with copy-paste commands for Docker, Ubuntu, CentOS, Windows, and GPU plugins
 - **Alert system** — SMTP (email) and Telegram with configurable thresholds
 - **Periodic monitoring** — Automatic data collection with charts
 - **Backup & restore** — Full database export/import with ZIP download

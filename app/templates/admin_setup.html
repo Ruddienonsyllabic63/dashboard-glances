@@ -199,7 +199,39 @@ netsh advfirewall firewall add rule name="Glances Web" protocol=TCP dir=in local
 # Opção B: Liberar para qualquer IP (menos seguro)
 # netsh advfirewall firewall add rule name="Glances Web" protocol=TCP dir=in localport=61208 action=allow</code></div>
     </div>
+    </div>
   </div>
+
+  <div class="settings-section" style="border-left:3px solid var(--accent);padding-left:1rem">
+    <h3>GPU Monitoring (Opcional)</h3>
+    <p class="section-desc">Para monitorar GPU nas máquinas clientes, instale o plugin correspondente:</p>
+
+    <div class="setup-block">
+      <h4>NVIDIA (pynvml)</h4>
+      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations.setup.copy }}</button><code># No venv do Glances na máquina cliente
+sudo /opt/glances/venv/bin/pip install pynvml
+
+# Reiniciar o Glances
+sudo systemctl restart glances-web</code></div>
+    </div>
+
+    <div class="setup-block">
+      <h4>AMD (pyadl)</h4>
+      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations.setup.copy }}</button><code># No venv do Glances na máquina cliente
+sudo /opt/glances/venv/bin/pip install pyadl
+
+# Reiniciar o Glances
+sudo systemctl restart glances-web</code></div>
+    </div>
+
+    <div class="setup-block">
+      <h4>Docker</h4>
+      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations.setup.copy }}</button><code># O container latest-full já inclui suporte GPU
+# Apenas reinicie o container após adicionar GPU
+docker restart glances</code></div>
+    </div>
+
+    <p class="section-desc" style="margin-top:0.5rem;font-size:0.8rem">⚠️ Após instalar o plugin, a GPU aparecerá automaticamente no dashboard.</p>
   </div>
 
   <div class="settings-section">
