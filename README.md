@@ -12,7 +12,8 @@ A web monitoring dashboard for [Glances](https://nicolargo.github.io/glances/) w
 
 ## Features
 
-- **Real-time dashboard** — CPU, memory, disk, network, and processes
+- **Real-time dashboard** — CPU, memory, disk, network, GPU, and processes
+- **GPU monitoring** — Load, temperature, and VRAM usage (requires Glances GPU plugin)
 - **Multiple templates** — Grid, list, cards, and compact views
 - **Multi-machine monitoring** — Monitor multiple Glances servers simultaneously
 - **Alert system** — SMTP (email) and Telegram with configurable thresholds
@@ -31,6 +32,7 @@ A web monitoring dashboard for [Glances](https://nicolargo.github.io/glances/) w
 
 - Python 3.10+
 - [Glances](https://nicolargo.github.io/glances/) with web API enabled (`glances -w`)
+- For GPU monitoring: install `pynvml` (NVIDIA) or `pyadl` (AMD) on client machines
 - pip3
 
 ---
@@ -265,6 +267,10 @@ dashboard-glances/
 | POST | `/api/auth/register` | Register user (admin) |
 | GET | `/api/machines/` | List machines |
 | POST | `/api/machines/` | Add machine |
+| PUT | `/api/machines/{id}` | Update machine |
+| DELETE | `/api/machines/{id}` | Delete machine |
+| POST | `/api/machines/reorder` | Reorder machines |
+| GET | `/api/machines/{id}/gpu` | GPU data for machine |
 | GET | `/api/dashboard/all-data` | All machines data |
 | GET | `/api/monitor/config` | Monitor config |
 | PUT | `/api/monitor/config` | Update config |
