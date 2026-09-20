@@ -37,6 +37,19 @@ fi
 GLANCES_BIN="$GLANCES_VENV/bin/glances"
 echo -e "  Binary: ${YELLOW}$GLANCES_BIN${NC}"
 
+# ──── Instalar plugin GPU (opcional) ────
+echo ""
+read -p "$(echo -e ${YELLOW}'Install GPU monitoring plugin? [y/N]: '${NC})" INSTALL_GPU
+if [[ "$INSTALL_GPU" =~ ^[Yy]$ ]]; then
+    echo -e "  Installing GPU plugins..."
+    "$GLANCES_VENV/bin/pip" install "glances[gpu]" --quiet 2>/dev/null || {
+        echo -e "  ${YELLOW}glances[gpu] failed, trying pynvml directly...${NC}"
+        "$GLANCES_VENV/bin/pip" install pynvml --quiet 2>/dev/null || true
+    }
+    echo -e "  GPU plugin: ${GREEN}installed${NC}"
+    echo -e "  ${YELLOW}Note: On client machines, also install pynvml (NVIDIA) or pyadl (AMD)${NC}"
+fi
+
 # ──── Instalar dependências do Dashboard ────
 echo ""
 echo -e "${GREEN}[2/6]${NC} Installing dashboard dependencies..."

@@ -32,8 +32,24 @@ A web monitoring dashboard for [Glances](https://nicolargo.github.io/glances/) w
 
 - Python 3.10+
 - [Glances](https://nicolargo.github.io/glances/) with web API enabled (`glances -w`)
-- For GPU monitoring: install `pynvml` (NVIDIA) or `pyadl` (AMD) on client machines
 - pip3
+
+### GPU Monitoring (optional)
+
+To enable GPU monitoring, install the GPU plugin on **each client machine** where Glances runs:
+
+```bash
+# NVIDIA GPUs
+pip3 install pynvml
+
+# AMD GPUs
+pip3 install pyadl
+
+# Or install all GPU support
+pip3 install "glances[gpu]"
+```
+
+The dashboard installer (`install.sh`) will ask if you want to install GPU support on the server side.
 
 ---
 
@@ -104,6 +120,12 @@ To monitor remote machines, Glances must be running on them with the web API ena
 ```bash
 # Install Glances
 pip3 install glances[web]
+
+# Optional: Install GPU monitoring support
+# NVIDIA GPUs:
+pip3 install pynvml
+# AMD GPUs:
+# pip3 install pyadl
 
 # Create systemd service
 sudo tee /etc/systemd/system/glances-web.service > /dev/null <<EOF
