@@ -344,7 +344,7 @@ function renderSensors() {
     else if (sensorType === 'voltage') unit = ' V';
 
     html += '<div class="sensor-card">';
-    html += '<i class="mdi ' + icon + '"></i>';
+    html += '<i class="mdi ' + icon.replace(':', '-') + '"></i>';
     html += '<div class="sensor-info">';
     html += '<div class="sensor-name">' + label + '</div>';
     html += '<div class="sensor-value ' + valClass + '">' + Math.round(val * 10) / 10 + unit + '</div>';

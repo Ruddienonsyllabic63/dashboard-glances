@@ -43,6 +43,7 @@
   <div class="sidebar-section">
     <h3>{{ translations.dashboard.sort_by }}</h3>
     <select id="sortBy" onchange="applyFilters()">
+      <option value="manual">{{ translations.dashboard.manual or 'Manual' }}</option>
       <option value="name">{{ translations.dashboard.name }}</option>
       <option value="cpu">{{ translations.dashboard.cpu_pct }}</option>
       <option value="mem">{{ translations.dashboard.mem_pct }}</option>

@@ -35,7 +35,7 @@ class User(Base):
 class Machine(Base):
     __tablename__ = "machines"
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(100), nullable=False)
+    name = Column(String(100), nullable=True, default="")
     host = Column(String(255), nullable=False)
     port = Column(Integer, default=61208)
     is_local = Column(Boolean, default=False)
@@ -44,6 +44,7 @@ class Machine(Base):
     icon = Column(String(50), default="mdi:server")
     description = Column(String(255), default="")
     color = Column(String(20), default="")
+    position = Column(Integer, default=0)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     last_seen = Column(DateTime, nullable=True)
 

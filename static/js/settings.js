@@ -31,6 +31,7 @@ var MACHINE_COLORS = [
 
 var selectedMachineIcon = 'mdi:server';
 var selectedMachineColor = '';
+var editingMachineId = null;
 
 function initSettings() {
   TOKEN = getToken();
@@ -95,14 +96,14 @@ function renderMachineIconGrid(filter) {
   icons.forEach(function(ic) {
     var sel = ic === selectedMachineIcon ? ' selected' : '';
     html += '<div class="icon-picker-item' + sel + '" data-icon="' + ic + '" onclick="selectMachineIcon(\'' + ic + '\')" title="' + ic + '">';
-    html += '<i class="mdi ' + ic + '"></i></div>';
+    html += '<i class="mdi ' + ic.replace(':', '-') + '"></i></div>';
   });
   grid.innerHTML = html;
 }
 
 function selectMachineIcon(icon) {
   selectedMachineIcon = icon;
-  document.getElementById('machineIconPreview').className = 'mdi ' + icon;
+  document.getElementById('machineIconPreview').className = 'mdi ' + icon.replace(':', '-');
   document.getElementById('machineIconName').textContent = icon;
   document.getElementById('machineIconDropdown').classList.remove('open');
 }
@@ -151,22 +152,44 @@ function loadMachines() {
   api('GET', '/machines/').then(function(data) {
     var tbody = document.getElementById('machinesBody');
     var html = '';
-    data.forEach(function(m) {
+    data.forEach(function(m, idx) {
       var icon = m.icon || 'mdi:server';
       var color = m.color || '';
       var colorStyle = color ? ' style="border-left:3px solid ' + color + ';padding-left:0.5rem"' : '';
-      html += '<tr' + colorStyle + '>';
-      html += '<td><i class="mdi ' + icon + '" style="font-size:1.2rem"></i></td>';
-      html += '<td>' + m.name + '</td>';
+      html += '<tr' + colorStyle + ' data-id="' + m.id + '">';
+      html += '<td style="white-space:nowrap">';
+      html += '<button class="btn-icon" onclick="moveMachine(' + m.id + ',-1)" title="Mover acima"' + (idx === 0 ? ' disabled' : '') + '>▲</button> ';
+      html += '<button class="btn-icon" onclick="moveMachine(' + m.id + ',1)" title="Mover abaixo"' + (idx === data.length - 1 ? ' disabled' : '') + '>▼</button>';
+      html += '</td>';
+      html += '<td><i class="mdi ' + icon.replace(':', '-') + '" style="font-size:1.2rem"></i></td>';
+      html += '<td>' + (m.name || m.host) + '</td>';
       html += '<td>' + m.host + '</td>';
       html += '<td>' + m.port + '</td>';
       html += '<td><span class="status-dot ' + m.status + '"></span>' + m.status + '</td>';
       if (IS_ADMIN) {
-        html += '<td><button class="btn-danger" onclick="deleteMachine(' + m.id + ')">Remover</button></td>';
+        html += '<td><button class="btn-secondary" onclick="editMachine(' + m.id + ')" style="margin-right:0.3rem">Editar</button>';
+        html += '<button class="btn-danger" onclick="deleteMachine(' + m.id + ')">Remover</button></td>';
       }
       html += '</tr>';
     });
-    tbody.innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted)">Nenhuma máquina cadastrada</td></tr>';
+    tbody.innerHTML = html || '<tr><td colspan="7" style="text-align:center;color:var(--text-muted)">Nenhuma máquina cadastrada</td></tr>';
+    window._machinesData = data;
+  });
+}
+
+function moveMachine(id, direction) {
+  var data = window._machinesData;
+  if (!data) return;
+  var ids = data.map(function(m) { return m.id; });
+  var idx = ids.indexOf(id);
+  if (idx === -1) return;
+  var newIdx = idx + direction;
+  if (newIdx < 0 || newIdx >= ids.length) return;
+  var tmp = ids[idx];
+  ids[idx] = ids[newIdx];
+  ids[newIdx] = tmp;
+  api('POST', '/machines/reorder', { ids: ids }).then(function() {
+    loadMachines();
   });
 }
 
@@ -177,22 +200,62 @@ function addMachine() {
   var isLocal = document.getElementById('machineLocal').checked;
   var tags = document.getElementById('machineTags').value.trim();
   var description = document.getElementById('machineDescription').value.trim();
-  if (!name || !host) return alert('Nome e Host são obrigatórios');
-  api('POST', '/machines/', {
+  if (!host) return alert('Host é obrigatório');
+  var payload = {
     name: name, host: host, port: port, is_local: isLocal, tags: tags,
     icon: selectedMachineIcon, description: description, color: selectedMachineColor,
-  }).then(function(res) {
-    document.getElementById('machineName').value = '';
-    document.getElementById('machineHost').value = '';
-    document.getElementById('machineTags').value = '';
-    document.getElementById('machineDescription').value = '';
-    selectedMachineIcon = 'mdi:server';
-    selectedMachineColor = '';
-    document.getElementById('machineIconPreview').className = 'mdi mdi-server';
-    document.getElementById('machineIconName').textContent = 'mdi:server';
-    initColorPicker();
+  };
+  var promise;
+  if (editingMachineId) {
+    promise = api('PUT', '/machines/' + editingMachineId, payload);
+  } else {
+    promise = api('POST', '/machines/', payload);
+  }
+  promise.then(function(res) {
+    if (res && res.detail) return alert(res.detail);
+    resetMachineForm();
     loadMachines();
   });
+}
+
+function editMachine(id) {
+  api('GET', '/machines/').then(function(data) {
+    var m = data.find(function(x) { return x.id === id; });
+    if (!m) return;
+    editingMachineId = id;
+    document.getElementById('machineName').value = m.name || '';
+    document.getElementById('machineHost').value = m.host || '';
+    document.getElementById('machinePort').value = m.port || 61208;
+    document.getElementById('machineLocal').checked = m.is_local || false;
+    document.getElementById('machineTags').value = m.tags || '';
+    document.getElementById('machineDescription').value = m.description || '';
+    selectedMachineIcon = m.icon || 'mdi:server';
+    selectedMachineColor = m.color || '';
+    document.getElementById('machineIconPreview').className = 'mdi ' + selectedMachineIcon.replace(':', '-');
+    document.getElementById('machineIconName').textContent = selectedMachineIcon;
+    initColorPicker();
+    document.querySelectorAll('#machineColorRow .color-swatch').forEach(function(sw) {
+      sw.classList.toggle('selected', sw.dataset.color === selectedMachineColor);
+    });
+    var btn = document.querySelector('.add-machine-form .btn-primary');
+    if (btn) btn.textContent = 'Salvar';
+    document.getElementById('machineName').focus();
+  });
+}
+
+function resetMachineForm() {
+  editingMachineId = null;
+  document.getElementById('machineName').value = '';
+  document.getElementById('machineHost').value = '';
+  document.getElementById('machineTags').value = '';
+  document.getElementById('machineDescription').value = '';
+  selectedMachineIcon = 'mdi:server';
+  selectedMachineColor = '';
+  document.getElementById('machineIconPreview').className = 'mdi mdi-server';
+  document.getElementById('machineIconName').textContent = 'mdi:server';
+  initColorPicker();
+  var btn = document.querySelector('.add-machine-form .btn-primary');
+  if (btn) btn.textContent = 'Adicionar';
 }
 
 function testMachine() {

@@ -11,7 +11,7 @@ router = APIRouter(prefix="/api/machines", tags=["machines"])
 
 
 class MachineCreate(BaseModel):
-    name: str
+    name: str = ""
     host: str
     port: int = 61208
     is_local: bool = False
@@ -30,11 +30,16 @@ class MachineUpdate(BaseModel):
     icon: Optional[str] = None
     description: Optional[str] = None
     color: Optional[str] = None
+    position: Optional[int] = None
+
+
+class MachineReorder(BaseModel):
+    ids: List[int]
 
 
 @router.get("/")
 def list_machines(user=Depends(get_current_user), db: Session = Depends(get_db)):
-    machines = db.query(Machine).all()
+    machines = db.query(Machine).order_by(Machine.position.asc(), Machine.id.asc()).all()
     result = []
     for m in machines:
         client = GlancesClient(m.host, m.port)
@@ -48,6 +53,7 @@ def list_machines(user=Depends(get_current_user), db: Session = Depends(get_db))
             "icon": m.icon or "mdi:server",
             "description": m.description or "",
             "color": m.color or "",
+            "position": m.position or 0,
             "status": "online" if alive else "offline",
             "last_seen": m.last_seen.isoformat() if m.last_seen else None,
             "created_at": m.created_at.isoformat() if m.created_at else None,
@@ -57,8 +63,19 @@ def list_machines(user=Depends(get_current_user), db: Session = Depends(get_db))
 
 @router.post("/")
 def create_machine(req: MachineCreate, user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    name = req.name
+    if not name:
+        client = GlancesClient(req.host, req.port)
+        try:
+            sys_info = client.get_system()
+            if sys_info and sys_info.get("hostname"):
+                name = sys_info["hostname"]
+            else:
+                name = req.host
+        except Exception:
+            name = req.host
     machine = Machine(
-        name=req.name, host=req.host, port=req.port, is_local=req.is_local,
+        name=name, host=req.host, port=req.port, is_local=req.is_local,
         tags=req.tags, icon=req.icon, description=req.description, color=req.color,
     )
     db.add(machine)
@@ -88,6 +105,16 @@ def delete_machine(machine_id: int, user: User = Depends(require_admin), db: Ses
     db.delete(machine)
     db.commit()
     return {"message": "Máquina removida"}
+
+
+@router.post("/reorder")
+def reorder_machines(req: MachineReorder, user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    for i, machine_id in enumerate(req.ids):
+        machine = db.query(Machine).filter(Machine.id == machine_id).first()
+        if machine:
+            machine.position = i
+    db.commit()
+    return {"message": "Ordem atualizada"}
 
 
 @router.get("/{machine_id}/data")

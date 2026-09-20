@@ -47,7 +47,7 @@ def get_all_data(
         if allowed_ids:
             query = query.filter(Machine.id.in_(allowed_ids))
 
-    machines = query.all()
+    machines = query.order_by(Machine.position.asc(), Machine.id.asc()).all()
     result = []
     for m in machines:
         client = GlancesClient(m.host, m.port)
@@ -66,7 +66,7 @@ def get_all_data(
 
 @router.get("/overview")
 def get_overview(user=Depends(get_current_user), db: Session = Depends(get_db)):
-    machines = db.query(Machine).filter(Machine.enabled == True).all()
+    machines = db.query(Machine).filter(Machine.enabled == True).order_by(Machine.position.asc(), Machine.id.asc()).all()
     overview = {"total": len(machines), "online": 0, "offline": 0, "machines": []}
     for m in machines:
         client = GlancesClient(m.host, m.port)

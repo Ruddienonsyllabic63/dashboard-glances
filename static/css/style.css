@@ -411,6 +411,16 @@ select {
   color: var(--text-muted);
   margin-bottom: 0.5rem;
 }
+.sidebar-section h3[onclick] {
+  cursor: pointer;
+  padding: 0.3rem 0.4rem;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s, color 0.15s;
+}
+.sidebar-section h3[onclick]:hover {
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
 .sidebar-section a {
   display: block;
   padding: 0.35rem 0.5rem;
@@ -423,6 +433,7 @@ select {
 .sidebar-section a:hover { color: var(--accent); background: var(--accent-subtle); }
 
 .filter-group { display: flex; flex-direction: column; gap: 0.3rem; }
+#machineFilter { display: flex; flex-direction: column; gap: 0.3rem; }
 .filter-group label, .filter-item {
   display: flex;
   align-items: center;
@@ -1574,6 +1585,8 @@ select {
   width: 100%;
 }
 .icon-picker-trigger .mdi { font-size: 1.3rem; }
+#machinesTable .mdi,
+#machinesBody .mdi { font-size: 1.2rem; }
 .icon-picker-trigger:hover { border-color: var(--accent); }
 .icon-picker-dropdown {
   display: none;

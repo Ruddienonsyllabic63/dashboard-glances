@@ -111,8 +111,11 @@ function renderPageTabs() {
   pagesData.forEach(function(p) {
     var active = currentPageId == p.id ? ' active' : '';
     html += '<button class="page-tab' + active + '" data-page-id="' + p.id + '" onclick="selectPage(' + p.id + ')">';
-    html += '<span class="mdi ' + (p.icon || 'mdi:view-dashboard') + '"></span> ' + p.name;
-    html += '<span class="page-tab-actions" onclick="event.stopPropagation();deletePage(' + p.id + ')" title="Excluir">&#10005;</span>';
+    html += '<span class="mdi ' + (p.icon || 'mdi:view-dashboard').replace(':', '-') + '"></span> ' + p.name;
+    html += '<span class="page-tab-actions">';
+    html += '<span onclick="event.stopPropagation();openPageModal(' + p.id + ')" title="Editar" style="cursor:pointer;margin-right:0.3rem">✏</span>';
+    html += '<span onclick="event.stopPropagation();deletePage(' + p.id + ')" title="Excluir" style="cursor:pointer">&#10005;</span>';
+    html += '</span>';
     html += '</button>';
   });
   html += '<button class="page-tab-add" onclick="openPageModal()" title="' + t('dashboard.add_page') + '">+</button>';
@@ -162,7 +165,7 @@ function openPageModal(editId) {
     html += '<label class="toggle" style="padding:0.3rem 0;font-size:0.85rem">';
     html += '<input type="checkbox" class="page-machine-cb" value="' + m.id + '"' + chk + '>';
     html += '<span class="toggle-track"></span>';
-    html += '<span class="toggle-label"><i class="mdi ' + (m.icon || 'mdi:server') + '" style="font-size:1rem"></i> ' + m.name + '</span>';
+    html += '<span class="toggle-label"><i class="mdi ' + (m.icon || 'mdi:server').replace(':', '-') + '" style="font-size:1rem"></i> ' + m.name + '</span>';
     html += '</label>';
   });
   list.innerHTML = html || '<p style="color:var(--text-muted);font-size:0.8rem">' + t('dashboard.no_machines') + '</p>';
@@ -241,13 +244,13 @@ function renderPageIconGrid(filter) {
   icons.forEach(function(ic) {
     var sel = ic === current ? ' selected' : '';
     html += '<div class="icon-picker-item' + sel + '" data-icon="' + ic + '" onclick="selectPageIcon(\'' + ic + '\')" title="' + ic + '">';
-    html += '<i class="mdi ' + ic + '"></i></div>';
+    html += '<i class="mdi ' + ic.replace(':', '-') + '"></i></div>';
   });
   grid.innerHTML = html;
 }
 
 function selectPageIcon(icon) {
-  document.getElementById('pageIconPreview').className = 'mdi ' + icon;
+  document.getElementById('pageIconPreview').className = 'mdi ' + icon.replace(':', '-');
   document.getElementById('pageIconName').textContent = icon;
   document.getElementById('pageIconDropdown').classList.remove('open');
 }
@@ -315,7 +318,7 @@ function updateMachineFilter() {
     var icon = m.machine.icon || 'mdi:server';
     html += '<label class="toggle"><input type="checkbox" class="machine-cb"' + chk + ' onchange="toggleMachine(this)" data-machine="' + mid + '">';
     html += '<span class="toggle-track"></span>';
-    html += '<span class="toggle-label"><i class="mdi ' + icon + '" style="font-size:0.9rem"></i> ' + m.machine.name + '</span></label>';
+    html += '<span class="toggle-label"><i class="mdi ' + icon.replace(':', '-') + '" style="font-size:0.9rem"></i> ' + m.machine.name + '</span></label>';
   });
   container.innerHTML = html;
   var countEl = document.getElementById('machineCount');
@@ -351,7 +354,7 @@ function toggleMachinesSection() {
 }
 
 function initMachinesSection() {
-  var collapsed = localStorage.getItem('machinesCollapsed') === '1';
+  var collapsed = localStorage.getItem('machinesCollapsed') !== '0';
   var container = document.getElementById('machinesListContainer');
   var icon = document.getElementById('machinesExpandIcon');
   if (collapsed) {
@@ -507,7 +510,7 @@ function renderMachineCard(m, filters) {
   var html = '<div class="machine-card' + (isOffline ? ' offline' : '') + '"' + cardStyle + '>';
   html += '<div class="card-header">';
   html += '<h4 style="cursor:pointer" onclick="window.location.href=\'/machine/' + mid + '\'">';
-  html += '<i class="mdi ' + icon + '" style="font-size:1.2rem;flex-shrink:0"></i>';
+  html += '<i class="mdi ' + icon.replace(':', '-') + '" style="font-size:1.2rem;flex-shrink:0"></i>';
   html += '<span class="status-dot ' + (isOffline ? 'offline' : 'online') + '"></span>';
   html += m.machine.name;
   if (m.system && m.system.hostname && m.system.hostname !== m.machine.name) {
@@ -542,10 +545,12 @@ function renderMachineCard(m, filters) {
     html += '<span style="font-size:0.7rem;color:var(--text-muted)">' + formatBytes(memUsed) + ' / ' + formatBytes(memTotal) + '</span></div>';
   }
 
-  if (filters.showMem && uptime) {
-    var ut = uptime.uptime || 0;
-    html += '<div class="metric-item"><span class="metric-label">' + t('machine.uptime') + '</span>';
-    html += '<span class="metric-value" style="font-size:0.85rem">' + formatUptime(ut) + '</span></div>';
+  if (filters.showMem) {
+    var ut = typeof uptime === 'number' ? uptime : (uptime.uptime || 0);
+    if (ut > 0) {
+      html += '<div class="metric-item"><span class="metric-label">' + t('machine.uptime') + '</span>';
+      html += '<span class="metric-value" style="font-size:0.85rem">' + formatUptime(ut) + '</span></div>';
+    }
   }
 
   if (filters.showDisk && disks.length > 0) {
@@ -705,7 +710,7 @@ function loadLayout(id) {
     document.getElementById('filterDisk').checked = true;
     document.getElementById('filterNet').checked = true;
     document.getElementById('filterProc').checked = true;
-    document.getElementById('sortBy').value = 'name';
+    document.getElementById('sortBy').value = 'manual';
     refreshAll();
     return;
   }
