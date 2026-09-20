@@ -51,6 +51,9 @@ class GlancesClient:
     def get_sensors(self) -> Optional[list]:
         return self._get("sensors")
 
+    def get_gpu(self) -> Optional[list]:
+        return self._get("gpu")
+
     def get_all(self) -> dict:
         now = datetime.now(timezone.utc).isoformat()
         return {
@@ -64,6 +67,7 @@ class GlancesClient:
             "load": self.get_load(),
             "uptime": self.get_uptime(),
             "sensors": self.get_sensors(),
+            "gpu": self.get_gpu(),
         }
 
     def is_alive(self) -> bool:

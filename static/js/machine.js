@@ -47,6 +47,7 @@ function loadMachineDetail() {
     renderDisk();
     renderNetwork();
     renderSensors();
+    renderGPU();
     renderProcesses();
   }).catch(function(err) {
     console.error('Erro ao carregar detalhe:', err);
@@ -351,6 +352,57 @@ function renderSensors() {
     html += '</div></div>';
   });
   document.getElementById('sensorList').innerHTML = html;
+}
+
+// ============================================================
+// GPU
+// ============================================================
+
+function renderGPU() {
+  var gpus = machineData.gpu || [];
+  var container = document.getElementById('gpuList');
+  if (!container) return;
+  if (gpus.length === 0) {
+    container.innerHTML = '<p style="color:var(--text-muted)">Nenhuma GPU detectada ou plugin GPU não ativo no Glances.</p>';
+    return;
+  }
+  var html = '';
+  gpus.forEach(function(g) {
+    var load = g.load || 0;
+    var temp = g.temperature || 0;
+    var memP = g.mem_percent || 0;
+    var memUsed = g.mem_used || 0;
+    var memTotal = g.mem || 0;
+    var name = g.name || 'GPU ' + (g.id || 0);
+
+    html += '<div class="sensor-card" style="flex-direction:column;align-items:stretch;padding:1rem;gap:0.75rem">';
+    html += '<div style="display:flex;align-items:center;gap:0.75rem">';
+    html += '<i class="mdi mdi-expansion-card" style="font-size:1.5rem;color:var(--accent)"></i>';
+    html += '<div><div style="font-weight:600">' + name + '</div>';
+    html += '<div style="font-size:0.78rem;color:var(--text-muted)">ID: ' + (g.id || 0) + '</div></div>';
+    html += '</div>';
+
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:0.75rem">';
+
+    html += '<div class="metric-item"><span class="metric-label">Load</span>';
+    html += '<span class="metric-value ' + pctClass(load) + '">' + Math.round(load) + '%</span>';
+    html += '<div class="progress-bar"><div class="progress-fill ' + pctClass(load) + '" style="width:' + load + '%"></div></div></div>';
+
+    if (temp > 0) {
+      html += '<div class="metric-item"><span class="metric-label">Temperature</span>';
+      html += '<span class="metric-value ' + (temp >= 85 ? 'critical' : temp >= 70 ? 'warning' : 'normal') + '">' + temp + '°C</span></div>';
+    }
+
+    if (memTotal > 0) {
+      html += '<div class="metric-item"><span class="metric-label">VRAM</span>';
+      html += '<span class="metric-value ' + pctClass(memP) + '">' + Math.round(memP) + '%</span>';
+      html += '<div class="progress-bar"><div class="progress-fill ' + pctClass(memP) + '" style="width:' + memP + '%"></div></div>';
+      html += '<span style="font-size:0.7rem;color:var(--text-muted)">' + formatBytes(memUsed * 1024 * 1024) + ' / ' + formatBytes(memTotal * 1024 * 1024) + '</span></div>';
+    }
+
+    html += '</div></div>';
+  });
+  container.innerHTML = html;
 }
 
 // ============================================================

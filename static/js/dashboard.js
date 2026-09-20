@@ -451,6 +451,7 @@ function applyFilters() {
 function getFilteredMachines() {
   var showCPU = document.getElementById('filterCPU').checked;
   var showMem = document.getElementById('filterMem').checked;
+  var showGPU = document.getElementById('filterGPU').checked;
   var showDisk = document.getElementById('filterDisk').checked;
   var showNet = document.getElementById('filterNet').checked;
   var showProc = document.getElementById('filterProc').checked;
@@ -465,7 +466,7 @@ function getFilteredMachines() {
     if (sortBy === 'status') return (b.status === 'online' ? 1 : 0) - (a.status === 'online' ? 1 : 0);
     return 0;
   });
-  return { machines: filtered, showCPU: showCPU, showMem: showMem, showDisk: showDisk, showNet: showNet, showProc: showProc };
+  return { machines: filtered, showCPU: showCPU, showMem: showMem, showGPU: showGPU, showDisk: showDisk, showNet: showNet, showProc: showProc };
 }
 
 function renderDashboard() {
@@ -481,6 +482,12 @@ function renderDashboard() {
 
 function pctClass(val) {
   if (val >= 90) return 'critical';
+  if (val >= 70) return 'warning';
+  return 'normal';
+}
+
+function tempClass(val) {
+  if (val >= 85) return 'critical';
   if (val >= 70) return 'warning';
   return 'normal';
 }
@@ -551,6 +558,24 @@ function renderMachineCard(m, filters) {
       html += '<div class="metric-item"><span class="metric-label">' + t('machine.uptime') + '</span>';
       html += '<span class="metric-value" style="font-size:0.85rem">' + formatUptime(ut) + '</span></div>';
     }
+  }
+
+  var gpus = m.gpu || [];
+  if (filters.showGPU && gpus.length > 0) {
+    gpus.forEach(function(g) {
+      var gpuLoad = g.load || 0;
+      var gpuTemp = g.temperature || 0;
+      var gpuMemP = g.mem_percent || 0;
+      html += '<div class="metric-item" style="border-left:2px solid var(--accent);padding-left:0.5rem;margin-top:0.5rem">';
+      html += '<span class="metric-label" style="color:var(--accent)">GPU: ' + (g.name || 'N/A') + '</span>';
+      html += '<div style="display:flex;gap:1rem;flex-wrap:wrap;font-size:0.78rem">';
+      html += '<span>Load: <strong class="' + pctClass(gpuLoad) + '">' + Math.round(gpuLoad) + '%</strong></span>';
+      if (gpuTemp > 0) html += '<span>Temp: <strong class="' + tempClass(gpuTemp) + '">' + gpuTemp + '°C</strong></span>';
+      if (gpuMemP > 0) html += '<span>VRAM: <strong class="' + pctClass(gpuMemP) + '">' + Math.round(gpuMemP) + '%</strong></span>';
+      html += '</div>';
+      html += '<div class="progress-bar"><div class="progress-fill ' + pctClass(gpuLoad) + '" style="width:' + gpuLoad + '%"></div></div>';
+      html += '</div>';
+    });
   }
 
   if (filters.showDisk && disks.length > 0) {

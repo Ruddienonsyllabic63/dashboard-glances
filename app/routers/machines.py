@@ -228,6 +228,15 @@ def get_machine_processes(machine_id: int, user=Depends(get_current_user), db: S
     return client.get_processlist() or []
 
 
+@router.get("/{machine_id}/gpu")
+def get_machine_gpu(machine_id: int, user=Depends(get_current_user), db: Session = Depends(get_db)):
+    machine = db.query(Machine).filter(Machine.id == machine_id).first()
+    if not machine:
+        raise HTTPException(status_code=404, detail="Máquina não encontrada")
+    client = GlancesClient(machine.host, machine.port)
+    return client.get_gpu() or []
+
+
 @router.post("/test")
 def test_connection(req: MachineCreate, user: User = Depends(require_admin)):
     import requests as req_lib

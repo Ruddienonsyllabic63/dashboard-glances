@@ -34,6 +34,9 @@
   <button class="detail-tab" data-tab="sensors" onclick="switchDetailTab('sensors')">
     <span class="mdi mdi-thermometer"></span> {{ translations.machine.sensors }}
   </button>
+  <button class="detail-tab" data-tab="gpu" onclick="switchDetailTab('gpu')">
+    <span class="mdi mdi-expansion-card"></span> GPU
+  </button>
   <button class="detail-tab" data-tab="processes" onclick="switchDetailTab('processes')">
     <span class="mdi mdi-file-tree"></span> {{ translations.machine.processes }}
   </button>
@@ -74,6 +77,11 @@
   <!-- SENSORS -->
   <div class="detail-section" id="section-sensors">
     <div class="sensor-grid" id="sensorList"></div>
+  </div>
+
+  <!-- GPU -->
+  <div class="detail-section" id="section-gpu">
+    <div id="gpuList"></div>
   </div>
 
   <!-- PROCESSES -->
