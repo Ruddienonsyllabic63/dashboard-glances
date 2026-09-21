@@ -33,7 +33,7 @@
 
     <div class="setup-block">
       <h4>{{ translations.setup.docker_recommended }}</h4>
-      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations.setup.copy }}</button><code># Instalar Docker (se não tiver)
+      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations['setup']['copy'] }}</button><code># Instalar Docker (se não tiver)
 sudo apt install -y docker.io
 sudo systemctl start docker
 sudo usermod -aG docker $USER
@@ -56,7 +56,7 @@ curl -s http://localhost:61208/api/4/version</code></div>
 
     <div class="setup-block">
       <h4>{{ translations.setup.ubuntu_24 }}</h4>
-      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations.setup.copy }}</button><code># Instalar dependências
+      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations['setup']['copy'] }}</button><code># Instalar dependências
 sudo apt update
 sudo apt install -y python3-venv python3-pip
 
@@ -98,7 +98,7 @@ curl -s http://localhost:61208/api/4/version</code></div>
 
     <div class="setup-block">
       <h4>{{ translations.setup.ubuntu_22 }}</h4>
-      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations.setup.copy }}</button><code># Instalar dependências
+      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations['setup']['copy'] }}</button><code># Instalar dependências
 sudo apt update
 sudo apt install -y python3-venv python3-pip
 
@@ -140,7 +140,7 @@ curl -s http://localhost:61208/api/4/version</code></div>
 
     <div class="setup-block">
       <h4>{{ translations.setup.centos }}</h4>
-      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations.setup.copy }}</button><code>sudo yum install -y python3-pip python3-virtualenv
+      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations['setup']['copy'] }}</button><code>sudo yum install -y python3-pip python3-virtualenv
 
 # Criar ambiente virtual
 sudo mkdir -p /opt/glances
@@ -172,7 +172,7 @@ sudo systemctl start glances-web</code></div>
 
     <div class="setup-block">
       <h4>{{ translations.setup.windows }}</h4>
-      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations.setup.copy }}</button><code># Abrir PowerShell como ADMINISTRADOR
+      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations['setup']['copy'] }}</button><code># Abrir PowerShell como ADMINISTRADOR
 # Passo 1: Instalar Python via Winget
 winget install Python.Python.3.12
 
@@ -208,7 +208,7 @@ netsh advfirewall firewall add rule name="Glances Web" protocol=TCP dir=in local
 
     <div class="setup-block">
       <h4>NVIDIA (pynvml)</h4>
-      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations.setup.copy }}</button><code># No venv do Glances na máquina cliente
+      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations['setup']['copy'] }}</button><code># No venv do Glances na máquina cliente
 sudo /opt/glances/venv/bin/pip install pynvml
 
 # Reiniciar o Glances
@@ -217,7 +217,7 @@ sudo systemctl restart glances-web</code></div>
 
     <div class="setup-block">
       <h4>AMD (pyadl)</h4>
-      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations.setup.copy }}</button><code># No venv do Glances na máquina cliente
+      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations['setup']['copy'] }}</button><code># No venv do Glances na máquina cliente
 sudo /opt/glances/venv/bin/pip install pyadl
 
 # Reiniciar o Glances
@@ -226,7 +226,7 @@ sudo systemctl restart glances-web</code></div>
 
     <div class="setup-block">
       <h4>Docker</h4>
-      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations.setup.copy }}</button><code># O container latest-full já inclui suporte GPU
+      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations['setup']['copy'] }}</button><code># O container latest-full já inclui suporte GPU
 # Apenas reinicie o container após adicionar GPU
 docker restart glances</code></div>
     </div>
@@ -240,7 +240,7 @@ docker restart glances</code></div>
 
     <div class="setup-block">
       <h4>{{ translations.setup.ufw }}</h4>
-      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations.setup.copy }}</button><code># Liberar apenas para o IP do servidor
+      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations['setup']['copy'] }}</button><code># Liberar apenas para o IP do servidor
 sudo ufw allow from {{ config.get('server_ip', 'IP_DO_SERVIDOR') }} to any port 61208
 
 # Ou liberar para qualquer IP (menos seguro)
@@ -250,7 +250,7 @@ sudo ufw reload</code></div>
 
     <div class="setup-block">
       <h4>{{ translations.setup.firewalld }}</h4>
-      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations.setup.copy }}</button><code>sudo firewall-cmd --permanent --add-rich-rule='
+      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations['setup']['copy'] }}</button><code>sudo firewall-cmd --permanent --add-rich-rule='
   rule family="ipv4"
   source address="{{ config.get('server_ip', 'IP_DO_SERVIDOR') }}"
   port protocol="tcp" port="61208"
@@ -260,7 +260,7 @@ sudo firewall-cmd --reload</code></div>
 
     <div class="setup-block">
       <h4>{{ translations.setup.iptables }}</h4>
-      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations.setup.copy }}</button><code>sudo iptables -A INPUT -p tcp -s {{ config.get('server_ip', 'IP_DO_SERVIDOR') }} --dport 61208 -j ACCEPT
+      <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations['setup']['copy'] }}</button><code>sudo iptables -A INPUT -p tcp -s {{ config.get('server_ip', 'IP_DO_SERVIDOR') }} --dport 61208 -j ACCEPT
 sudo iptables-save | sudo tee /etc/iptables/rules.v4</code></div>
     </div>
   </div>
@@ -268,7 +268,7 @@ sudo iptables-save | sudo tee /etc/iptables/rules.v4</code></div>
   <div class="settings-section">
     <h3>4. {{ translations.setup.step4_title }}</h3>
     <p class="section-desc">{{ translations.setup.step4_desc }}</p>
-    <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations.setup.copy }}</button><code># Testar a API do Glances
+    <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">{{ translations['setup']['copy'] }}</button><code># Testar a API do Glances
 curl -s http://IP_DO_CLIENTE:61208/api/4/version
 
 # Deve retornar algo como: "4.5.6"
@@ -325,7 +325,7 @@ function showCopied(btn) {
   btn.textContent = '{{ translations.setup.copied }}';
   btn.classList.add('copied');
   setTimeout(function() {
-    btn.textContent = '{{ translations.setup.copy }}';
+    btn.textContent = '{{ translations['setup']['copy'] }}';
     btn.classList.remove('copied');
   }, 2000);
 }
