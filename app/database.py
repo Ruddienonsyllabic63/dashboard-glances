@@ -145,6 +145,14 @@ class PasswordResetToken(Base):
     created_at = Column(DateTime, default=datetime.now)
 
 
+class UserAlertMachine(Base):
+    __tablename__ = "user_alert_machines"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, nullable=False, index=True)
+    machine_id = Column(Integer, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
 def init_db():
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()

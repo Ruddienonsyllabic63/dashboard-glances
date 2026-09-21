@@ -37,7 +37,7 @@
 
   <div class="settings-section">
     <h3>🔔 Preferências de Alerta</h3>
-    <p class="section-desc">Configure como deseja receber os alertas de monitoramento.</p>
+    <p class="section-desc">Configure como e de quais máquinas deseja receber alertas.</p>
     <div class="config-grid">
       <label class="toggle">
         <input type="checkbox" id="profileAlertsEmail" {% if user.receive_alerts_email %}checked{% endif %}>
@@ -50,8 +50,20 @@
         <span class="toggle-label">Receber alertas por Telegram</span>
       </label>
     </div>
-    <div style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-muted)">
-      💡 Os alertas são enviados quando um usuário do sistema (scinfor, librenms, root, etc.) atinge o limite configurado.
+
+    <div style="margin-top:1rem">
+      <label style="font-size:0.85rem;color:var(--text-secondary);display:block;margin-bottom:0.5rem">
+        <strong>Máquinas para monitorar:</strong>
+      </label>
+      <p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:0.5rem">Selecione as máquinas para as quais deseja receber alertas. Se nenhuma for selecionada, recebe de todas.</p>
+      <div id="alertMachinesList" style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.5rem">
+        <span style="color:var(--text-muted);font-size:0.8rem">Carregando...</span>
+      </div>
+    </div>
+
+    <div style="margin-top:1rem">
+      <button class="btn-primary" onclick="saveAlertPrefs()" style="width:auto;padding:0.5rem 1.2rem">Salvar Preferências</button>
+      <span id="alertResult" style="font-size:0.85rem;margin-left:0.5rem"></span>
     </div>
   </div>
 
@@ -131,5 +143,43 @@ function changePassword() {
     }
   });
 }
+
+// ============================================================
+// ALERT MACHINE PREFERENCES
+// ============================================================
+
+function loadAlertMachines() {
+  api('GET', '/system/me/alert-machines').then(function(data) {
+    var list = document.getElementById('alertMachinesList');
+    if (!data.machines || data.machines.length === 0) {
+      list.innerHTML = '<span style="color:var(--text-muted);font-size:0.8rem">Nenhuma máquina cadastrada</span>';
+      return;
+    }
+    var html = '';
+    data.machines.forEach(function(m) {
+      var chk = m.selected ? ' checked' : '';
+      html += '<label class="toggle" style="padding:0.3rem 0;font-size:0.85rem;display:flex">';
+      html += '<input type="checkbox" class="alert-machine-cb" value="' + m.id + '"' + chk + '>';
+      html += '<span class="toggle-track"></span>';
+      html += '<span class="toggle-label">' + m.name + ' (' + m.host + ')</span>';
+      html += '</label>';
+    });
+    list.innerHTML = html;
+  });
+}
+
+function saveAlertPrefs() {
+  var r = document.getElementById('alertResult');
+  var ids = [];
+  document.querySelectorAll('.alert-machine-cb:checked').forEach(function(cb) {
+    ids.push(parseInt(cb.value));
+  });
+  api('PUT', '/system/me/alert-machines', { machine_ids: ids }).then(function(d) {
+    r.style.color = d.message ? 'var(--green)' : 'var(--red)';
+    r.textContent = d.message || d.detail || 'Erro';
+  });
+}
+
+loadAlertMachines();
 </script>
 {% endblock %}

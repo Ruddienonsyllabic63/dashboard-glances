@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional, List
-from app.database import get_db, SystemConfig, User
+from app.database import get_db, SystemConfig, User, UserAlertMachine, Machine
 from app.auth import get_current_user, require_admin
 
 router = APIRouter(prefix="/api/system", tags=["system"])
@@ -118,3 +118,36 @@ def update_my_profile(req: MyProfileUpdate, user: User = Depends(get_current_use
         user.receive_alerts_telegram = req.receive_alerts_telegram
     db.commit()
     return {"message": "Perfil atualizado"}
+
+
+# ============================================================
+# USER ALERT MACHINE PREFERENCES
+# ============================================================
+
+@router.get("/me/alert-machines")
+def get_my_alert_machines(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    prefs = db.query(UserAlertMachine).filter(UserAlertMachine.user_id == user.id).all()
+    machine_ids = [p.machine_id for p in prefs]
+    machines = db.query(Machine).all()
+    result = []
+    for m in machines:
+        result.append({
+            "id": m.id,
+            "name": m.name or m.host,
+            "host": m.host,
+            "selected": m.id in machine_ids if machine_ids else True,
+        })
+    return {"machines": result, "has_preferences": len(machine_ids) > 0}
+
+
+class AlertMachineUpdate(BaseModel):
+    machine_ids: List[int]
+
+
+@router.put("/me/alert-machines")
+def update_my_alert_machines(req: AlertMachineUpdate, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    db.query(UserAlertMachine).filter(UserAlertMachine.user_id == user.id).delete()
+    for mid in req.machine_ids:
+        db.add(UserAlertMachine(user_id=user.id, machine_id=mid))
+    db.commit()
+    return {"message": "Preferências de alerta atualizadas"}

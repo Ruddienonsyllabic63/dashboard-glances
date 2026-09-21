@@ -76,6 +76,7 @@ def collect_once():
                         send_threshold_alert(
                             db,
                             log.machine_name,
+                            machine_id=m.id,
                             cpu_percent=log.cpu_percent,
                             threshold=config.cpu_threshold,
                             alert_type="cpu"
@@ -91,6 +92,7 @@ def collect_once():
                         send_threshold_alert(
                             db,
                             log.machine_name,
+                            machine_id=m.id,
                             mem_percent=log.mem_percent,
                             threshold=config.mem_threshold,
                             alert_type="mem"
@@ -106,6 +108,7 @@ def collect_once():
                         send_threshold_alert(
                             db,
                             log.machine_name,
+                            machine_id=m.id,
                             disk_percent=log.disk_root_percent,
                             threshold=config.disk_threshold,
                             alert_type="disk"
@@ -121,6 +124,7 @@ def collect_once():
                         send_threshold_alert(
                             db,
                             log.machine_name,
+                            machine_id=m.id,
                             proc_count=log.process_count,
                             threshold=config.process_threshold,
                             alert_type="process"
@@ -146,6 +150,7 @@ def collect_once():
                                 send_threshold_alert(
                                     db,
                                     log.machine_name,
+                                    machine_id=m.id,
                                     proc_count=log.process_count,
                                     threshold=config.per_user_threshold,
                                     user_alert=json.dumps(alerted),

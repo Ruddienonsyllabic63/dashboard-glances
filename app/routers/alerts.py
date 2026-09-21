@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from datetime import datetime
 from pathlib import Path
-from app.database import get_db, SystemConfig, MonitorLog, Machine
+from app.database import get_db, SystemConfig, MonitorLog, Machine, User, UserAlertMachine
 from app.auth import get_current_user, require_admin
 
 router = APIRouter(prefix="/api/alerts", tags=["alerts"])
@@ -80,9 +80,8 @@ def send_telegram(db: Session, message: str) -> bool:
     return True
 
 
-def send_threshold_alert(db: Session, machine_name: str, proc_count=None, user_alert=None, cpu_percent=0, mem_percent=0, disk_percent=0, threshold=0, top_procs=None, alert_type="process"):
+def send_threshold_alert(db: Session, machine_name: str, machine_id: int = None, proc_count=None, user_alert=None, cpu_percent=0, mem_percent=0, disk_percent=0, threshold=0, top_procs=None, alert_type="process"):
     import json
-    from app.database import User
     
     # Preparar mensagem baseada no tipo de alerta
     if alert_type == "cpu":
@@ -159,9 +158,25 @@ def send_threshold_alert(db: Session, machine_name: str, proc_count=None, user_a
     users_list = json.loads(user_alert) if user_alert else []
     
     # Enviar email para usuários do dashboard que têm alertas habilitados
+    # e que têm esta máquina selecionada (ou não têm preferências = todas)
     dashboard_users = db.query(User).filter(
         User.receive_alerts_email == True
     ).all()
+    
+    # Filtrar por preferências de máquina
+    if machine_id is not None:
+        filtered_users = []
+        for u in dashboard_users:
+            prefs = db.query(UserAlertMachine).filter(
+                UserAlertMachine.user_id == u.id
+            ).all()
+            # Se não tem preferências, recebe de todas as máquinas
+            if not prefs:
+                filtered_users.append(u)
+            # Se tem preferências, verifica se esta máquina está selecionada
+            elif any(p.machine_id == machine_id for p in prefs):
+                filtered_users.append(u)
+        dashboard_users = filtered_users
     
     html = render_template(html_template,
         machine_name=machine_name,
