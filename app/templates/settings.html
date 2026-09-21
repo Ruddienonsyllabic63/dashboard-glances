@@ -25,6 +25,7 @@
       <button class="tab-btn" data-tab="tab-alerts">{{ translations.settings.alerts }}</button>
       {% endif %}
       <button class="tab-btn" data-tab="tab-profile">{{ translations.settings.profile }}</button>
+      <button class="tab-btn" data-tab="tab-alert-machines">📨 Máquinas de Alerta</button>
       <button class="tab-btn" data-tab="tab-password">{{ translations.settings.change_password }}</button>
     </div>
 
@@ -182,6 +183,19 @@
               <li>Telegram requer configuração do bot em <strong>{{ translations.settings.alerts }} → Configuração do Telegram</strong></li>
             </ul>
           </div>
+        </div>
+      </div>
+
+      <!-- ABA MÁQUINAS DE ALERTA -->
+      <div class="tab-panel" id="tab-alert-machines">
+        <h3>📨 Máquinas de Alerta</h3>
+        <p class="section-desc">Selecione as máquinas para as quais deseja receber alertas por E-mail e Telegram. Se nenhuma for selecionada, recebe de todas.</p>
+        <div id="alertMachinesList" style="max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.75rem;margin-top:0.75rem">
+          <span style="color:var(--text-muted);font-size:0.85rem">Carregando...</span>
+        </div>
+        <div style="margin-top:1rem">
+          <button class="btn-primary" onclick="saveAlertMachines()" style="width:auto;padding:0.5rem 1.2rem">Salvar Preferências</button>
+          <span id="alertMachinesResult" style="font-size:0.85rem;margin-left:0.5rem"></span>
         </div>
       </div>
 

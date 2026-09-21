@@ -64,6 +64,7 @@ function api(method, path, body) {
 function loadSettings() {
   initSettings();
   loadMachines();
+  loadAlertMachines();
   if (IS_ADMIN) {
     loadUsers();
     loadBackups();
@@ -469,6 +470,42 @@ function saveAlertPrefs() {
     receive_alerts_email: document.getElementById('alertEmail').checked,
     receive_alerts_telegram: document.getElementById('alertTelegram').checked,
   }).then(function(d) {
+    r.style.color = d.message ? 'var(--green)' : 'var(--red)';
+    r.textContent = d.message || d.detail || 'Erro';
+  });
+}
+
+// ============================================================
+// ALERT MACHINE PREFERENCES
+// ============================================================
+
+function loadAlertMachines() {
+  api('GET', '/system/me/alert-machines').then(function(data) {
+    var list = document.getElementById('alertMachinesList');
+    if (!data.machines || data.machines.length === 0) {
+      list.innerHTML = '<span style="color:var(--text-muted);font-size:0.85rem">Nenhuma máquina cadastrada</span>';
+      return;
+    }
+    var html = '';
+    data.machines.forEach(function(m) {
+      var chk = m.selected ? ' checked' : '';
+      html += '<label class="toggle" style="padding:0.4rem 0;font-size:0.85rem;display:flex">';
+      html += '<input type="checkbox" class="alert-machine-cb" value="' + m.id + '"' + chk + '>';
+      html += '<span class="toggle-track"></span>';
+      html += '<span class="toggle-label"><i class="mdi mdi-server" style="font-size:1rem"></i> ' + m.name + ' (' + m.host + ')</span>';
+      html += '</label>';
+    });
+    list.innerHTML = html;
+  });
+}
+
+function saveAlertMachines() {
+  var r = document.getElementById('alertMachinesResult');
+  var ids = [];
+  document.querySelectorAll('.alert-machine-cb:checked').forEach(function(cb) {
+    ids.push(parseInt(cb.value));
+  });
+  api('PUT', '/system/me/alert-machines', { machine_ids: ids }).then(function(d) {
     r.style.color = d.message ? 'var(--green)' : 'var(--red)';
     r.textContent = d.message || d.detail || 'Erro';
   });
