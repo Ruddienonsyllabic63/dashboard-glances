@@ -53,9 +53,11 @@ function loadMonitorConfig() {
     document.getElementById('cpuThreshold').value = cfg.cpu_threshold || 90;
     document.getElementById('memThreshold').value = cfg.mem_threshold || 90;
     document.getElementById('diskThreshold').value = cfg.disk_threshold || 90;
+    document.getElementById('gpuThreshold').value = cfg.gpu_threshold || 90;
     document.getElementById('alertCpu').checked = cfg.alert_cpu !== false;
     document.getElementById('alertMem').checked = cfg.alert_mem !== false;
     document.getElementById('alertDisk').checked = cfg.alert_disk !== false;
+    document.getElementById('alertGpu').checked = cfg.alert_gpu !== false;
     document.getElementById('alertProcess').checked = cfg.alert_process !== false;
     document.getElementById('alertPerUser').checked = cfg.alert_per_user !== false;
 
@@ -145,9 +147,11 @@ function saveMonitorConfig() {
     cpu_threshold: parseInt(document.getElementById('cpuThreshold').value) || 90,
     mem_threshold: parseInt(document.getElementById('memThreshold').value) || 90,
     disk_threshold: parseInt(document.getElementById('diskThreshold').value) || 90,
+    gpu_threshold: parseInt(document.getElementById('gpuThreshold').value) || 90,
     alert_cpu: document.getElementById('alertCpu').checked,
     alert_mem: document.getElementById('alertMem').checked,
     alert_disk: document.getElementById('alertDisk').checked,
+    alert_gpu: document.getElementById('alertGpu').checked,
     alert_process: document.getElementById('alertProcess').checked,
     alert_per_user: document.getElementById('alertPerUser').checked,
   };
@@ -283,6 +287,7 @@ function renderLogsTable(logs) {
     html += '<td>' + (l.mem_percent || '-') + '</td>';
     html += '<td>' + (l.load_1 || '-') + ' / ' + (l.load_5 || '-') + ' / ' + (l.load_15 || '-') + '</td>';
     html += '<td>' + (l.disk_root_percent || '-') + '</td>';
+    html += '<td>' + (l.gpu_load || '-') + '</td>';
     html += '<td>' + (l.process_count || '-') + '</td>';
     html += '<td style="font-size:0.75rem">' + procs + '</td>';
     html += '<td>' + alertBadge + '</td>';
@@ -343,6 +348,7 @@ function renderChart(logs) {
   });
   var cpuData = reversed.map(function(l) { return l.cpu_percent || 0; });
   var memData = reversed.map(function(l) { return l.mem_percent || 0; });
+  var gpuData = reversed.map(function(l) { return l.gpu_load || 0; });
 
   logsChart = new Chart(ctx, {
     type: 'line',
@@ -351,6 +357,7 @@ function renderChart(logs) {
       datasets: [
         { label: 'CPU %', data: cpuData, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.3, pointRadius: 0 },
         { label: 'Mem %', data: memData, borderColor: '#a855f7', backgroundColor: 'rgba(168,85,247,0.1)', fill: true, tension: 0.3, pointRadius: 0 },
+        { label: 'GPU %', data: gpuData, borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', fill: true, tension: 0.3, pointRadius: 0 },
       ]
     },
     options: {

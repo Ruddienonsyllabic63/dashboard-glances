@@ -80,7 +80,7 @@ def send_telegram(db: Session, message: str) -> bool:
     return True
 
 
-def send_threshold_alert(db: Session, machine_name: str, machine_id: int = None, proc_count=None, user_alert=None, cpu_percent=0, mem_percent=0, disk_percent=0, threshold=0, top_procs=None, alert_type="process"):
+def send_threshold_alert(db: Session, machine_name: str, machine_id: int = None, proc_count=None, user_alert=None, cpu_percent=0, mem_percent=0, disk_percent=0, gpu_percent=0, gpu_temp=0, threshold=0, top_procs=None, alert_type="process"):
     import json
     
     # Preparar mensagem baseada no tipo de alerta
@@ -144,6 +144,18 @@ def send_threshold_alert(db: Session, machine_name: str, machine_id: int = None,
         msg += f"📈 <b>CPU:</b> {cpu_percent}%\n"
         msg += f"💾 <b>Mem:</b> {mem_percent}%\n"
         msg += f"💿 <b>Disco:</b> {disk_percent}%\n"
+        msg += f"\n📅 {datetime.now().strftime('%d/%m/%Y %H:%M')}"
+        email_subject = subject
+        html_template = "alert_template.html"
+        
+    elif alert_type == "gpu":
+        subject = f"⚠ Alerta de GPU - {machine_name}"
+        msg = f"<b>⚠ Alerta de GPU</b>\n\n"
+        msg += f"🖥 <b>Máquina:</b> {machine_name}\n"
+        msg += f"🎮 <b>GPU Load:</b> {gpu_percent}%\n"
+        if gpu_temp:
+            msg += f"🌡 <b>Temperatura:</b> {gpu_temp}°C\n"
+        msg += f"🎯 <b>Limite:</b> {threshold}%\n"
         msg += f"\n📅 {datetime.now().strftime('%d/%m/%Y %H:%M')}"
         email_subject = subject
         html_template = "alert_template.html"

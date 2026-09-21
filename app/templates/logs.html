@@ -68,6 +68,7 @@
             <th>{{ translations.dashboard.mem_pct }}</th>
             <th>{{ translations.logs.load }}</th>
             <th>{{ translations.logs.disk_pct }}</th>
+            <th>GPU</th>
             <th>{{ translations.logs.proc_count }}</th>
             <th>{{ translations.logs.top_process }}</th>
             <th>{{ translations.logs.alerts }}</th>
@@ -162,6 +163,19 @@
             <label style="font-size:0.8rem;color:var(--text-muted)">{{ translations.logs.disk_limit }}:</label>
             <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.3rem">
               <input type="number" id="diskThreshold" min="0" max="100" value="90" style="width:80px;padding:0.3rem;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary)">
+              <span style="font-size:0.8rem;color:var(--text-muted)">%</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1rem">
+          <label class="toggle" style="margin-bottom:0.75rem">
+            <input type="checkbox" id="alertGpu"><span class="toggle-track"></span><span class="toggle-label"><strong>🎮 GPU Load</strong></span>
+          </label>
+          <div style="margin-top:0.5rem">
+            <label style="font-size:0.8rem;color:var(--text-muted)">Limite GPU:</label>
+            <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.3rem">
+              <input type="number" id="gpuThreshold" min="0" max="100" value="90" style="width:80px;padding:0.3rem;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary)">
               <span style="font-size:0.8rem;color:var(--text-muted)">%</span>
             </div>
           </div>

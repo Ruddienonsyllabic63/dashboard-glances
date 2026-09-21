@@ -56,6 +56,16 @@ def collect_once():
                         root = next((d for d in disk if d.get("mnt_point") == "/"), disk[0])
                         log.disk_root_percent = root.get("percent", 0)
 
+                gpu_load = 0
+                gpu_temp = 0
+                gpu_list = client.get_gpu()
+                if gpu_list and len(gpu_list) > 0:
+                    g = gpu_list[0]
+                    log.gpu_load = g.get("load", 0) or 0
+                    log.gpu_temp = g.get("temperature", 0) or 0
+                    gpu_load = log.gpu_load
+                    gpu_temp = log.gpu_temp
+
                 if config.collect_procs:
                     procs = client.get_processlist()
                     if procs:
@@ -115,6 +125,23 @@ def collect_once():
                         )
                     except Exception as e:
                         print(f"[Monitor] Erro ao enviar alerta Disco: {e}")
+
+                # Check GPU threshold
+                if config.alert_gpu and config.gpu_threshold > 0 and gpu_load >= config.gpu_threshold:
+                    log.threshold_alert = True
+                    try:
+                        from app.routers.alerts import send_threshold_alert
+                        send_threshold_alert(
+                            db,
+                            log.machine_name,
+                            machine_id=m.id,
+                            gpu_percent=gpu_load,
+                            gpu_temp=gpu_temp,
+                            threshold=config.gpu_threshold,
+                            alert_type="gpu"
+                        )
+                    except Exception as e:
+                        print(f"[Monitor] Erro ao enviar alerta GPU: {e}")
 
                 # Check Process count threshold
                 if config.alert_process and config.process_threshold > 0 and log.process_count >= config.process_threshold:

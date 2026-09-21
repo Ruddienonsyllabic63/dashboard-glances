@@ -90,6 +90,8 @@ class MonitorLog(Base):
     mem_used = Column(Float, default=0)
     mem_total = Column(Float, default=0)
     disk_root_percent = Column(Float, default=0)
+    gpu_load = Column(Float, default=0)
+    gpu_temp = Column(Float, default=0)
     load_1 = Column(Float, default=0)
     load_5 = Column(Float, default=0)
     load_15 = Column(Float, default=0)
@@ -119,10 +121,12 @@ class MonitorConfig(Base):
     cpu_threshold = Column(Integer, default=90)
     mem_threshold = Column(Integer, default=90)
     disk_threshold = Column(Integer, default=90)
+    gpu_threshold = Column(Integer, default=90)
     # Alert enable/disable
     alert_cpu = Column(Boolean, default=True)
     alert_mem = Column(Boolean, default=True)
     alert_disk = Column(Boolean, default=True)
+    alert_gpu = Column(Boolean, default=True)
     alert_process = Column(Boolean, default=True)
     alert_per_user = Column(Boolean, default=True)
 
